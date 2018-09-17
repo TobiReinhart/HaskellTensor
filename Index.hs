@@ -152,6 +152,3 @@ interchangeBlockInds i j (a,b,c,d,e,f)
         | i == 5 = (a,b,c,d,swoopBlocks j e,f)
         | i == 6 = (a,b,c,d,e,swoopBlocks j f)
         | otherwise = error "wrong index positions to interchange"
-
-
-

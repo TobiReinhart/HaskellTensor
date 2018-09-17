@@ -88,4 +88,33 @@ module Tensor (
     
     tensorBlockTranspose :: Int -> ([Int],[Int]) -> Tensor a -> Tensor a
     tensorBlockTranspose i j (Tensor rank f) = (Tensor rank g)
-            where g = f.(interchangeBlockInds i j)          
+            where g = f.(interchangeBlockInds i j)     
+            
+    --the next step is writing a tensor product function
+
+    rankPlus :: Rank -> Rank -> Rank
+    rankPlus (a,b,c,d,e,f) (g,h,i,j,k,l) = (a+g,b+h,c+i,d+j,e+k,f+l)
+
+    safeSplitAt :: Int -> [a] -> ([a],[a])
+    safeSplitAt i l 
+                | i >= length l = error "not enough elements in list"
+                | otherwise = splitAt i l
+
+    splitInds :: Rank -> Index -> (Index,Index)
+    splitInds (r1,r2,r3,r4,r5,r6) (i1,i2,i3,i4,i5,i6) = 
+        ((fst split1, fst split2, fst split3, fst split4, fst split5, fst split6),
+         (snd split1, snd split2, snd split3, snd split4, snd split5, snd split6))
+                where 
+                    split1 = safeSplitAt r1 i1
+                    split2 = safeSplitAt r2 i2
+                    split3 = safeSplitAt r3 i3
+                    split4 = safeSplitAt r4 i4
+                    split5 = safeSplitAt r5 i5
+                    split6 = safeSplitAt r6 i6
+
+
+    tensorProduct :: (Num a) => Tensor a -> Tensor a -> Tensor a
+    tensorProduct (Tensor rank1 f) (Tensor rank2 g) = Tensor (rankPlus rank1 rank2) h
+                 where 
+                    h = \x -> f (fst (split x)) * g (snd (split x))
+                    split = splitInds rank1
