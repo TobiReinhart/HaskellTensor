@@ -5,7 +5,8 @@ checkIndex, getRank, getTensorFunction, getValue, getRangeList, getIndexRange, m
 tensorSMult, tensorAdd, tensorSub, tensorTranspose, tensorBlockTranspose, symmetrizeTensor,aSymmetrizeTensor,
 blockSymmetrizeTensor, ordSubLists2, cyclicSymmetrizeTensor, symTensor, rankPlus, rankMinus, safeSplitAt,
 splitInds, tensorProduct, tensorContract_A, tensorContract_I, tensorContract_a, tensorContract,
-rankReduce, evalTensor1, evalTensor, rankLength, tensorFlatten
+rankReduce, evalTensor1, evalTensor, rankLength, tensorFlatten, evalFullTensor1, evalFullTensor,
+evalRangeTensor1, evalRangeTensor
     ) where 
     
     
@@ -222,10 +223,36 @@ rankReduce, evalTensor1, evalTensor, rankLength, tensorFlatten
                 newrank = rankReduce i rank
                 g = \x -> (getValue (Tensor rank  f))  (insertIndex i j k x)
    
-    --evals Tensor at multiple indicesspecified by the Int triples
+    --evals Tensor at multiple indicesspecified by the Int triples succesively (obviously only works for multiple indeices in the list)
 
     evalTensor :: [(Int,Int,Int)] -> Tensor a -> Tensor a
     evalTensor k t = foldr evalTensor1 t k 
+
+    --the next function is for evaluating a tensor in the full range of the indices that correspond to a given list of slots
+
+    --careful as evalTensor removes indices of the tensor and thereby possibly changes the position of indices (aboce the same)
+
+    evalFullTensor1 :: (Int,Int) -> Tensor a -> [Tensor a]
+    evalFullTensor1 (i,j) t 
+                | i == 1 || i == 2 = map (\x -> evalTensor1 x t) (zipWith g (replicate 21 (i,j)) [0..20])
+                | i == 3 || i == 4 = map (\x -> evalTensor1 x t) (zipWith g (replicate 10 (i,j)) [0..9])
+                | i == 5 || i == 6 = map (\x -> evalTensor1 x t) (zipWith g (replicate 4 (i,j)) [0..3])
+                | otherwise = error "wrong index slot to insert value"
+                 where g (a,b) n = (a,b,n) 
+
+    evalFullTensor :: [(Int,Int)] -> Tensor a -> [Tensor a]
+    evalFullTensor k t = foldr g [t] k
+                where g = \x y -> concat (map (evalFullTensor1 x) y )
+
+    --the last eval function evals the tensor only in a restricted range of some of its indices (i.e when symmetries are present)
+
+    evalRangeTensor1 :: (Int,Int,[Int]) -> Tensor a -> [Tensor a]
+    evalRangeTensor1 (m,n,j) t = map (\x -> evalTensor1 x t) (zipWith g (replicate (length j) (m,n)) j)
+                where g (a,b) n = (a,b,n)
+
+    evalRangeTensor :: [(Int,Int,[Int])] -> Tensor a -> [Tensor a]
+    evalRangeTensor k t = foldr g [t] k
+                where g = \x y -> concat (map (evalRangeTensor1 x) y )
 
     rankLength :: Rank -> Int
     rankLength (a,b,c,d,e,f) = a + b + c + d + e + f
