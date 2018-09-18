@@ -6,7 +6,9 @@ Uind_a(..), Lind_a(..), Uind_I(..), Lind_I(..), Uind_A(..), Lind_A(..),
 Uinds_a, Linds_a, Uinds_I, Linds_I, Uinds_A, Linds_A, Index,
 fromList2U_a, fromList2L_a, fromList2U_I, fromList2L_I, fromList2U_A, fromList2L_A,
 toListfromU_a, toListfromL_a, toListfromU_I, toListfromL_I, toListfromU_A, toListfromL_A,
-indexList, swoop, swoopBlocks, interchangeInds, interchangeBlockInds
+indexList, swoop, swoopBlocks, interchangeInds, interchangeBlockInds, removeElem, insertElem, replaceElem, 
+contractionInd, contractionList_A, contractionList_I, contractionList_a, contractionIndex_A, contractionIndex_I,
+contractionIndex_a
 ) where 
 
 
@@ -104,6 +106,7 @@ toListfromL_A inds = map fromEnum inds
         
 swoop :: (Ord a,Eq a) => (Int,Int) -> [a] -> [a]
 swoop y x
+    | max a b >= length x = error "wrong index number to change"
     | a==b = x
     | b<=a = swoop (swap y) x
     | b==(length x)-1 = take a x ++ (x !! b) : init (drop (a+1) x) ++ [(x !! a)] 
@@ -152,3 +155,76 @@ interchangeBlockInds i j (a,b,c,d,e,f)
         | i == 5 = (a,b,c,d,swoopBlocks j e,f)
         | i == 6 = (a,b,c,d,e,swoopBlocks j f)
         | otherwise = error "wrong index positions to interchange"
+
+--we need the functions for the contraction of indices
+
+
+removeElem :: (Eq a) => Int -> [a] -> [a]
+removeElem i b
+    | b == [] = error "cannot remove elements from empty list"
+    | i >= lb = error "list has not enough elements"
+    | i==0 = tail b
+    | i == lb = init b
+    | otherwise = (fst x) ++ (tail (snd x))
+            where x = splitAt i b
+                  lb = length b
+
+insertElem :: (Eq a) => Int -> a -> [a] -> [a]
+insertElem i ins b
+    | i > lb || i < 0 = error "insert position out of index range "
+    | i == lb = b ++ [ins] 
+    | otherwise = (fst sb) ++ ins : (snd sb) 
+            where 
+                    sb = splitAt i b
+                    lb = length b
+ 
+replaceElem :: (Eq a) => Int -> a -> [a] -> [a]
+replaceElem i ins b
+    | b == [] = error "list is empty"
+    | i > lb || i < 0 = error "replace position out of index range "
+    | i == (lb-1) = init b ++ [ins] 
+    | otherwise = (fst sb) ++ ins : (tail (snd sb))
+            where 
+                    sb = splitAt i b
+                    lb = length b
+
+
+contractionInd :: (Eq a) => (Int,Int) -> ([a],[a]) -> ([a],[a])
+contractionInd (i,j) (a,b) = (removeElem i a, removeElem j b)
+
+contractionList_A :: (Int,Int) -> (Uinds_A,Linds_A) -> [(Uinds_A,Linds_A)]
+contractionList_A (i,j) (a,b) = zip c d
+                where 
+                        c = map (\x1 -> insertElem i x1 a) (fromList2U_A [0..20])
+                        d = map (\x2 -> insertElem j x2 b) (fromList2L_A [0..20])
+
+contractionList_I :: (Int,Int) -> (Uinds_I,Linds_I) -> [(Uinds_I,Linds_I)]
+contractionList_I (i,j) (a,b) = zip c d
+                where 
+                        c = map (\x1 -> insertElem i x1 a) (fromList2U_I [0..10])
+                        d = map (\x2 -> insertElem j x2 b) (fromList2L_I [0..10])
+        
+contractionList_a :: (Int,Int) -> (Uinds_a,Linds_a) -> [(Uinds_a,Linds_a)]
+contractionList_a (i,j) (a,b) = zip c d
+                where 
+                        c = map (\x1 -> insertElem i x1 a) (fromList2U_a [0..3])
+                        d = map (\x2 -> insertElem j x2 b) (fromList2L_a [0..3])
+
+contractionIndex_A :: (Int,Int) -> Index -> [Index]
+contractionIndex_A k (a,b,c,d,e,f) = [(fst x, snd x,c,d,e,f) | x <- contractionList_A k (a,b)]
+
+contractionIndex_I :: (Int,Int) -> Index -> [Index]
+contractionIndex_I k (a,b,c,d,e,f) = [(a,b,fst x, snd x,e,f) | x <- contractionList_I k (c,d)]
+
+contractionIndex_a :: (Int,Int) -> Index -> [Index]
+contractionIndex_a k (a,b,c,d,e,f) = [(a,b,c,d,fst x, snd x) | x <- contractionList_a k (e,f)]
+
+contractionRemovedIndex_A :: (Int,Int) -> Index -> Index
+contractionRemovedIndex_A (i,j) (a,b,c,d,e,f) = (removeElem i a, removeElem j b,c,d,e,f)
+
+contractionRemovedIndex_I :: (Int,Int) -> Index -> Index
+contractionRemovedIndex_I (i,j) (a,b,c,d,e,f) = (a,b,removeElem i c, removeElem j d,e,f)
+
+contractionRemovedIndex_a :: (Int,Int) -> Index -> Index
+contractionRemovedIndex_a (i,j) (a,b,c,d,e,f) = (a,b,c,d,removeElem i e, removeElem j f)
+

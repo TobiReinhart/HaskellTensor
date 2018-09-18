@@ -88,12 +88,52 @@ module Tensor (
     
     tensorBlockTranspose :: Int -> ([Int],[Int]) -> Tensor a -> Tensor a
     tensorBlockTranspose i j (Tensor rank f) = (Tensor rank g)
-            where g = f.(interchangeBlockInds i j)     
+            where g = f.(interchangeBlockInds i j)    
             
+    --we need functions for symmetrizing tensors
+
+    symmetrizeTensor :: (Fractional a) => Int -> (Int,Int) -> Tensor a -> Tensor a
+    symmetrizeTensor n k t = tensorSMult (1/2) (tensorAdd t (tensorTranspose n k t))
+
+    aSymmetrizeTensor :: (Fractional a) => Int -> (Int,Int) -> Tensor a -> Tensor a
+    aSymmetrizeTensor n k t = tensorSMult (1/2) (tensorSub t (tensorTranspose n k t))
+
+    blockSymmetrizeTensor :: (Fractional a) => Int -> ([Int],[Int]) -> Tensor a -> Tensor a
+    blockSymmetrizeTensor n k t = tensorSMult (1/2) (tensorAdd t (tensorBlockTranspose n k t))
+
+    --now cyclic symmetrization
+
+    ordSubLists2 :: [a] -> [(a,a)]
+    ordSubLists2 x 
+        | lengthX < 2 = []
+        | lengthX == 2 = [(x !! 0, x !! 1)]
+        | otherwise = zip (repeat (head x)) (tailX) ++ ordSubLists2 (tailX)
+          where lengthX = length x
+                tailX = tail x
+
+    cyclicSymmetrizeTensor :: (Fractional a) => Int -> [Int] -> Tensor a -> Tensor a
+    cyclicSymmetrizeTensor  n k t = foldr  (symmetrizeTensor n) t list2
+                where list2 = ordSubLists2 k 
+
+   --combine the symmetrizer functions in the form syms, asyms ,blocksyms, cyclcicsyms
+
+    symTensor :: (Fractional a) => Int -> [(Int,Int)] -> [(Int,Int)] -> [([Int],[Int])] -> [[Int]] -> Tensor a -> Tensor a
+    symTensor n syms asyms bsyms csyms t = (tensorCSym.tensorBSym.tensorASym.tensorSym) t 
+                where 
+                        tensorSym = \x1 -> foldr (symmetrizeTensor n) x1 syms
+                        tensorASym = \x2 -> foldr (aSymmetrizeTensor n) x2 asyms
+                        tensorBSym = \x3 -> foldr (blockSymmetrizeTensor n) x3 bsyms
+                        tensorCSym = \x4 -> foldr (cyclicSymmetrizeTensor n) x4 csyms
+
+
     --the next step is writing a tensor product function
 
     rankPlus :: Rank -> Rank -> Rank
     rankPlus (a,b,c,d,e,f) (g,h,i,j,k,l) = (a+g,b+h,c+i,d+j,e+k,f+l)
+
+    rankMinus :: Rank -> Rank -> Rank 
+    rankMinus (a,b,c,d,e,f) (g,h,i,j,k,l) = (a-g,b-h,c-i,d-j,e-k,f-l)
+
 
     safeSplitAt :: Int -> [a] -> ([a],[a])
     safeSplitAt i l 
@@ -118,3 +158,30 @@ module Tensor (
                  where 
                     h = \x -> f (fst (split x)) * g (snd (split x))
                     split = splitInds rank1
+
+    --and the contraction of indices
+
+    tensorContract_A :: (Num a) => (Int,Int) -> Tensor a -> Tensor a 
+    tensorContract_A k (Tensor rank f) = Tensor newrank g
+                        where 
+                                newrank = rankMinus rank (1,1,0,0,0,0)
+                                g = \x -> foldl (+) 0 (map f (contractionIndex_A k x))
+
+    tensorContract_I :: (Num a) => (Int,Int) -> Tensor a -> Tensor a 
+    tensorContract_I k (Tensor rank f) = Tensor newrank g
+                        where 
+                                newrank = rankMinus rank (0,0,1,1,0,0)
+                                g = \x -> foldl (+) 0 (map f (contractionIndex_I k x))
+
+    tensorContract_a :: (Num a) => (Int,Int) -> Tensor a -> Tensor a 
+    tensorContract_a k (Tensor rank f) = Tensor newrank g
+                        where 
+                                newrank = rankMinus rank (0,0,0,0,1,1)
+                                g = \x -> foldl (+) 0 (map f (contractionIndex_a k x))
+
+    tensorContract :: (Num a) => [(Int,Int)] -> [(Int,Int)] -> [(Int,Int)] -> Tensor a -> Tensor a
+    tensorContract inds_A inds_I inds_a t = (c_A.c_I.c_a) t
+                                where
+                                        c_A = \x1 -> foldr tensorContract_A x1 inds_A 
+                                        c_I = \x2 -> foldr tensorContract_I x2 inds_I
+                                        c_a = \x3 -> foldr tensorContract_a x3 inds_a
