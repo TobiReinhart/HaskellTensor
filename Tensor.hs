@@ -1,6 +1,6 @@
 
 module Tensor (
-Rank, Tensor, 
+Rank, Tensor(..), 
 checkIndex, getRank, getTensorFunction, getValue, getRangeList, getIndexRange, mkTensorMap,
 tensorSMult, tensorAdd, tensorSub, tensorTranspose, tensorBlockTranspose, symmetrizeTensor,aSymmetrizeTensor,
 blockSymmetrizeTensor, ordSubLists2, cyclicSymmetrizeTensor, symTensor, rankPlus, rankMinus, safeSplitAt,
@@ -150,6 +150,7 @@ evalRangeTensor1, evalRangeTensor
 
     safeSplitAt :: Int -> [a] -> ([a],[a])
     safeSplitAt i l 
+                | i == 0 = ([],l)
                 | i >= length l = error "not enough elements in list"
                 | otherwise = splitAt i l
 
@@ -165,6 +166,7 @@ evalRangeTensor1, evalRangeTensor
                     split5 = safeSplitAt r5 i5
                     split6 = safeSplitAt r6 i6
 
+    --there is a problem with lists starting at zero !!!!!!
 
     tensorProduct :: (Num a) => Tensor a -> Tensor a -> Tensor a
     tensorProduct (Tensor rank1 f) (Tensor rank2 g) = Tensor (rankPlus rank1 rank2) h
