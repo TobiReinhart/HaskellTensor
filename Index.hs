@@ -8,7 +8,7 @@ fromList2U_a, fromList2L_a, fromList2U_I, fromList2L_I, fromList2U_A, fromList2L
 toListfromU_a, toListfromL_a, toListfromU_I, toListfromL_I, toListfromU_A, toListfromL_A,
 indexList, swoop, swoopBlocks, interchangeInds, interchangeBlockInds, removeElem, insertElem, replaceElem, 
 contractionInd, contractionList_A, contractionList_I, contractionList_a, contractionIndex_A, contractionIndex_I,
-contractionIndex_a
+contractionIndex_a, insertIndex
 ) where 
 
 
@@ -228,3 +228,12 @@ contractionRemovedIndex_I (i,j) (a,b,c,d,e,f) = (a,b,removeElem i c, removeElem 
 contractionRemovedIndex_a :: (Int,Int) -> Index -> Index
 contractionRemovedIndex_a (i,j) (a,b,c,d,e,f) = (a,b,c,d,removeElem i e, removeElem j f)
 
+insertIndex :: Int -> Int -> Int -> Index -> Index
+insertIndex i j k (a,b,c,d,e,f)
+                | i <= 0 || i > 6 = error "wrong index position"
+                | i == 1 = (insertElem j (toEnum k :: Uind_A) a,b,c,d,e,f)
+                | i == 2 = (a,insertElem j (toEnum k :: Lind_A) b,c,d,e,f)
+                | i == 3 = (a,b,insertElem j (toEnum k :: Uind_I) c,d,e,f)
+                | i == 4 = (a,b,c,insertElem j (toEnum k :: Lind_I) d,e,f)
+                | i == 5 = (a,b,c,d,insertElem j (toEnum k :: Uind_a) e,f)
+                | i == 6 = (a,b,c,d,e,insertElem j (toEnum k :: Lind_a) f)

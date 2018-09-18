@@ -1,6 +1,11 @@
 
 module Tensor (
-
+Rank, Tensor, 
+checkIndex, getRank, getTensorFunction, getValue, getRangeList, getIndexRange, mkTensorMap,
+tensorSMult, tensorAdd, tensorSub, tensorTranspose, tensorBlockTranspose, symmetrizeTensor,aSymmetrizeTensor,
+blockSymmetrizeTensor, ordSubLists2, cyclicSymmetrizeTensor, symTensor, rankPlus, rankMinus, safeSplitAt,
+splitInds, tensorProduct, tensorContract_A, tensorContract_I, tensorContract_a, tensorContract,
+rankReduce, evalTensor1, evalTensor, rankLength, tensorFlatten
     ) where 
     
     
@@ -26,6 +31,11 @@ module Tensor (
     --now define the tensor datatype
     
     data Tensor a = Tensor Rank (Index -> a)
+
+    --this allows us to apply a function to each value stored in a Tensor
+
+    instance Functor Tensor where
+        fmap f (Tensor rank g) = Tensor rank (f.g)
     
     getRank :: (Tensor a) -> Rank
     getRank (Tensor rank f) = rank
@@ -33,7 +43,7 @@ module Tensor (
     getTensorFunction :: (Tensor a) -> (Index -> a)
     getTensorFunction (Tensor rank f) = f
     
-    --everytime we read out values we check if the index fits the rank
+    --everytime we read out values we check if the index fits the rank (this function is for full evaluation)
     
     getValue :: (Tensor a) -> Index -> a
     getValue (Tensor rank f) ind 
@@ -185,3 +195,43 @@ module Tensor (
                                         c_A = \x1 -> foldr tensorContract_A x1 inds_A 
                                         c_I = \x2 -> foldr tensorContract_I x2 inds_I
                                         c_a = \x3 -> foldr tensorContract_a x3 inds_a
+
+
+    --furthermore we need a function that allows us to insert specific values for some of the indices of a given tensor
+    --and as result get a tensor of reduced rank
+
+    --the 3 Ints specify the index slot the position and the value that is inerted
+
+    rankReduce :: Int -> Rank -> Rank
+    rankReduce i (a,b,c,d,e,f) 
+        | i <= 0 || i> 6 = error "index not in rank range"
+        | i == 1 = (a-1,b,c,d,e,f)
+        | i == 2 = (a,b-1,c,d,e,f)
+        | i == 3 = (a,b,c-1,d,e,f)
+        | i == 4 = (a,b,c,d-1,e,f)
+        | i == 5 = (a,b,c,d,e-1,f)
+        | i == 6 = (a,b,c,d,e,f-1)
+
+    --evals Tensor at one specific index
+
+    evalTensor1 :: (Int,Int,Int) -> Tensor a -> Tensor a
+    evalTensor1 (i,j,k) (Tensor rank f) = Tensor newrank g
+        where 
+                newrank = rankReduce i rank
+                g = \x -> f (insertIndex i j k x)
+   
+    --evals Tensor at multiple indicesspecified by the Int triples
+
+    evalTensor :: [(Int,Int,Int)] -> Tensor a -> Tensor a
+    evalTensor k t = foldr evalTensor1 t k 
+
+    rankLength :: Rank -> Int
+    rankLength (a,b,c,d,e,f) = a + b + c + d + e + f
+
+    tensorFlatten :: Tensor a -> a
+    tensorFlatten (Tensor rank f) 
+                | rankLength rank /= 0 = error "can only flatten tensors of rank 1"
+                | otherwise = f ([],[],[],[],[],[])
+
+
+
