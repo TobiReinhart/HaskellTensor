@@ -1,6 +1,6 @@
 module Involutive (
     symIndList, symMult2_a, symMultMap2_a, isAreaOrdered, areaDofList, areaMult, areaMultMap, deltaF_a, delta_a,
-    deltaF_I, delta_I, deltaF_A, delta_a, interMap_I, interF_I, inter_I, interF_J, inter_J,
+    deltaF_I, delta_I, deltaF_A, delta_A, interMap_I, interF_I, inter_I, interF_J, inter_J,
     interMap_A, canonicalizeArea, inter_A, interF_B, inter_B, interMetric, interArea
 
 ) where
@@ -109,6 +109,8 @@ module Involutive (
 
     --and the "inverse" intertwiner
 
+    --divide or mult by factor???
+
     interF_J :: (Fractional a) => Index -> a 
     interF_J ([],[],[],[i],[j,k],[])
             | elem  s (Map.lookup (toListfromL_I [i]) map1) = (1/symMult2_a s) 
@@ -138,7 +140,8 @@ module Involutive (
                 | c < a || (c == a && b > d) = canonicalizeArea (i,[c,d,a,b])
                 | a > b = canonicalizeArea (-i,[b,a,c,d])
                 | c > d = canonicalizeArea (-i,[a,b,d,c])
-                | otherwise = error "wrong index number"
+                | otherwise = (0,[a,b,c,d])
+    canonicalizeArea (i,j) = error ("wrong index number" ++ " " ++ (show (j)))
 
     --define the intertwiner with area index up
 
@@ -157,6 +160,8 @@ module Involutive (
 
     --now the intertwiner with the area index in the low position
 
+    --divide or mult by factor???
+
     interF_B :: (Fractional a) => Index -> a
     interF_B ([],[i],[],[],[a,b,c,d],[])
                 | elem ( snd canonical ) (Map.lookup (toListfromL_A [i]) map) = (fst canonical) * (1/ (areaMult ( snd canonical )))
@@ -174,7 +179,7 @@ module Involutive (
     --now define the GOTAY MARSDEN intertwiner of the Metric and Area Metric as a contraction of the corresp. intertwiners
 
     interMetric :: (Fractional a) => Tensor a
-    interMetric = tensorContract_a (0,0) prod 
+    interMetric = tensorSMult (-2) $ tensorContract_a (0,0) prod 
             where 
                 i = inter_I
                 j = inter_J
@@ -182,7 +187,7 @@ module Involutive (
 
     
     interArea :: (Fractional a) => Tensor a
-    interArea = tensorContract [] [] [(3,3),(2,2),(1,1)] prod 
+    interArea = tensorSMult (-4) $ tensorContract [] [] [(1,1),(2,2),(3,3)] prod 
                 where
                     i = inter_A
                     j = inter_B

@@ -147,12 +147,16 @@ evalRangeTensor1, evalRangeTensor
     rankMinus :: Rank -> Rank -> Rank 
     rankMinus (a,b,c,d,e,f) (g,h,i,j,k,l) = (a-g,b-h,c-i,d-j,e-k,f-l)
 
+    --there is the problem !!!
 
-    safeSplitAt :: Int -> [a] -> ([a],[a])
+    safeSplitAt :: (Eq a) =>  Int -> [a] -> ([a],[a])
     safeSplitAt i l 
+                | l == [] = ([],[])
                 | i == 0 = ([],l)
-                | i >= length l = error "not enough elements in list"
+                | i > length l = error "not enough elements in list"
                 | otherwise = splitAt i l
+
+    --there is a problem!!!           
 
     splitInds :: Rank -> Index -> (Index,Index)
     splitInds (r1,r2,r3,r4,r5,r6) (i1,i2,i3,i4,i5,i6) = 
@@ -194,7 +198,9 @@ evalRangeTensor1, evalRangeTensor
                                 newrank = rankMinus rank (0,0,0,0,1,1)
                                 g = \x -> foldl (+) 0 (map (getValue (Tensor rank  f))  (contractionIndex_a k x))
 
-    --best to enter the indices thta are contracted beginning with the last index                            
+    --best to enter the indices thta are contracted beginning with the last index   
+    
+    --carefull as there was a problem (lists [(Int,Int)] are evaluated from right to left) !!
 
     tensorContract :: (Num a) => [(Int,Int)] -> [(Int,Int)] -> [(Int,Int)] -> Tensor a -> Tensor a
     tensorContract inds_A inds_I inds_a t = (c_A.c_I.c_a) t
@@ -228,6 +234,8 @@ evalRangeTensor1, evalRangeTensor
                 g = \x -> (getValue (Tensor rank  f))  (insertIndex i j k x)
    
     --evals Tensor at multiple indicesspecified by the Int triples succesively (obviously only works for multiple indeices in the list)
+
+    --again as with contractions list are folded from right to left 
 
     evalTensor :: [(Int,Int,Int)] -> Tensor a -> Tensor a
     evalTensor k t = foldr evalTensor1 t k 

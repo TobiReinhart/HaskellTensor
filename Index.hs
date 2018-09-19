@@ -169,9 +169,11 @@ removeElem i b
             where x = splitAt i b
                   lb = length b
 
+--there is a problem !!! -> Problem solved (in TensorContraction)
+
 insertElem :: (Eq a) => Int -> a -> [a] -> [a]
 insertElem i ins b
-    | i > lb || i < 0 = error "insert position out of index range "
+    | i > lb || i < 0 = error ("insert position out of index range " ++ "index pos =" ++ (show i) ++ "length = " ++ (show lb))
     | i == lb = b ++ [ins] 
     | otherwise = (fst sb) ++ ins : (snd sb) 
             where 
