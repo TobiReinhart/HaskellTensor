@@ -194,6 +194,8 @@ evalRangeTensor1, evalRangeTensor
                                 newrank = rankMinus rank (0,0,0,0,1,1)
                                 g = \x -> foldl (+) 0 (map (getValue (Tensor rank  f))  (contractionIndex_a k x))
 
+    --best to enter the indices thta are contracted beginning with the last index                            
+
     tensorContract :: (Num a) => [(Int,Int)] -> [(Int,Int)] -> [(Int,Int)] -> Tensor a -> Tensor a
     tensorContract inds_A inds_I inds_a t = (c_A.c_I.c_a) t
                                 where
