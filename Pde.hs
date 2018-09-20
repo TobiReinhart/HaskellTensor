@@ -11,6 +11,7 @@ module Pde (
     import BasicTensors
     import Numeric.Natural
     import qualified Data.Map.Strict as Map
+    import Data.Maybe
 
     --main idea is pde = Map from (Multindex,dvar) to number
 
@@ -49,8 +50,18 @@ module Pde (
 
     --needs to be improved
 
+    mkAllMultiIndsList :: Int -> Natural -> [[Natural]]
+    mkAllMultiIndsList 0 _ = []
+    mkAllMultiIndsList i 0 =   [(replicate i 0)]
+    mkAllMultiIndsList 1 n =  [[n]]
+    mkAllMultiIndsList i n = sort $ concat $ zipWith h [0..n] f
+            where 
+                l = map (\x -> (n - x) ) [0..n]
+                f = map (mkAllMultiIndsList (i-1)) l
+                h = \ x y -> map (\z -> x : z) y
+
     mkAllMultiInds :: Int -> Natural -> [MultiIndex]
-    mkAllMultiInds i n = [mkMultiIndex i n l | l <- (cartProdList (replicate i [0..n])), diffOrder l == n ]
+    mkAllMultiInds i n = map (mkMultiIndex i n) $ mkAllMultiIndsList i n
 
     mkAllMultiIndsUpto :: Int -> Natural -> [MultiIndex]
     mkAllMultiIndsUpto i n
@@ -112,14 +123,24 @@ module Pde (
             where list2 = removeZeros list
                   inds  = map (\x -> (isRightMultInd dvar ivar ord (fst x), snd x)) list2
 
-    
-    prolongPde :: MultiIndex -> Pde a -> Pde a
-    prolongPde i (Pde dvar ivar ord map) = Pde dvar ivar (ord + diffOrderMult i)  (Map.mapKeys (\x -> (addMultiInds i (fst x), snd x)) map) 
+    --right now this works only for pdes with constant coefficients
 
+    --this is not the case for the diffeo equivariance equations as here there are coefficints that are ivars
 
-    --we need functions to combine pdes (if dvar and ivar are the same)
+    prolongPdeConstCoeff :: MultiIndex -> Pde a -> Pde a
+    prolongPdeConstCoeff i (Pde dvar ivar ord map) = Pde dvar ivar (ord + diffOrderMult i)  (Map.mapKeys (\x -> (addMultiInds i (fst x), snd x)) map) 
 
-    --still only for combining different parts of one pde
+    --we need to store the information of the possible present ivar in a 
+
+    --from the pde in tensor from we can extract a second "pde" where for each equation, for each ivar we store 
+    --the corresponding (multiIndex,dvar) times factor in a map 
+
+    type IvarMap a = Map.Map Int ((MultiIndex,Int),a)
+
+    --this map must be extracted for each eqn from the tensor pdes
+
+    --each time we prolong an equation we check if a t the corresponding ivar (multIndNumberMap) we have an entry in the IvarMap
+    --if so we insert it into the map !!
     
     combinePdes :: (Num a) => Pde a -> Pde a -> Pde a
     combinePdes (Pde dvar1 ivar1 ord1 map1) (Pde dvar2 ivar2 ord2 map2)
@@ -129,10 +150,29 @@ module Pde (
 
     --we need to print the pde in maple form
 
-    
+    --carefull how we translate between multiInds and Numbers (consistency)
+
     multIndNumberMap :: Int -> Natural -> (Map.Map MultiIndex Int)
     multIndNumberMap i n = Map.fromList $ zip l [1..length l]
             where l = mkAllMultiIndsUpto i n 
+
+    multIndex1toNumber :: MultiIndex -> Int
+    multIndex1toNumber (UnsafeMultInd i ord l)
+            |  ord /= 1 = error "only valid for diffOrder 1"
+            | otherwise = i - (length zeros)
+             where zeros = takeWhile (\x -> x == 0) l 
+
+    --this function prolongs the type of pde we get from the equivariance equaitons (given the additional information of the IvarMap)         
+    
+    --the IvarMap must be extracted from the tensor pde system
+
+    prolongPde :: (Num a) => MultiIndex -> Pde a -> IvarMap a -> Pde a
+    prolongPde ind (Pde i j n map) ivarmap 
+            | (diffOrderMult ind) /= 1 = error "for the moment only works for 1 prolongations"
+            | isJust l = Pde i j n $  Map.insertWith (+) ( fst entry ) ( snd entry ) map
+            | otherwise = (Pde i j n map) 
+                    where l = Map.lookup (multIndex1toNumber ind) ivarmap
+                          entry = fromJust $ Map.lookup (multIndex1toNumber ind) ivarmap
 
             
     
