@@ -1,7 +1,7 @@
 --this is the module for dealing with pdes
 
 module Pde (
-
+    MultiIndex, multIndex1toNumber, lengthMult
     ) where
 
     import Data.List
@@ -38,6 +38,9 @@ module Pde (
     mkMultiIndex i n list
             | length list == i && diffOrder list == n = UnsafeMultInd i n list
             | otherwise = error "list does not fit multiindex specification"
+
+    multIndgetList :: MultiIndex -> [Natural]
+    multIndgetList (UnsafeMultInd i n l) = l 
 
     --this is too slow
 
@@ -174,8 +177,12 @@ module Pde (
                     where l = Map.lookup (multIndex1toNumber ind) ivarmap
                           entry = fromJust $ Map.lookup (multIndex1toNumber ind) ivarmap
 
+    numbertoMultIndex1 :: Int -> Int -> MultiIndex
+    numbertoMultIndex1 i j = mkMultiIndex i 1 l
+            where l = (replicate (i-j) 0) ++ ( 1 : (replicate (j-1) 0))
+
             
-    
+    --it is probably better to encode the non constant coeffs in the pde directly in the tensors that it is constructed from
 
 
 

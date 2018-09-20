@@ -175,7 +175,15 @@ evalRangeTensor1, evalRangeTensor
     tensorProduct :: (Num a) => Tensor a -> Tensor a -> Tensor a
     tensorProduct (Tensor rank1 f) (Tensor rank2 g) = Tensor (rankPlus rank1 rank2) h
                  where 
-                    h = \x -> (getValue (Tensor rank1  f))  (fst (split x)) * (getValue (Tensor rank2  g))  (snd (split x))
+                    h = \x -> (getValue (Tensor rank1  f)  (fst (split x))) * (getValue (Tensor rank2  g)  (snd (split x)))
+                    split = splitInds rank1
+
+    --TensorProdukt with combiner function, for tensors with different typed entries
+                    
+    tensorProductWith ::   (a -> b -> c ) -> Tensor a -> Tensor b -> Tensor c
+    tensorProductWith combine (Tensor rank1 f) (Tensor rank2 g) = Tensor (rankPlus rank1 rank2) h
+                 where 
+                    h = \x -> combine (getValue (Tensor rank1  f)  (fst (split x)))  (getValue (Tensor rank2  g)  (snd (split x)))
                     split = splitInds rank1
 
     --and the contraction of indices
@@ -199,7 +207,7 @@ evalRangeTensor1, evalRangeTensor
                                 g = \x -> foldl (+) 0 (map (getValue (Tensor rank  f))  (contractionIndex_a k x))
 
     --best to enter the indices thta are contracted beginning with the last index   
-    
+
     --carefull as there was a problem (lists [(Int,Int)] are evaluated from right to left) !!
 
     tensorContract :: (Num a) => [(Int,Int)] -> [(Int,Int)] -> [(Int,Int)] -> Tensor a -> Tensor a
@@ -208,6 +216,39 @@ evalRangeTensor1, evalRangeTensor
                                         c_A = \x1 -> foldr tensorContract_A x1 inds_A 
                                         c_I = \x2 -> foldr tensorContract_I x2 inds_I
                                         c_a = \x3 -> foldr tensorContract_a x3 inds_a
+
+
+
+
+    --in order to deal with the Ivar entries in the Eqns we need to be able to Contract Tensor with elements that are no instance of Num
+    --i.e. where the + function is constracted by hand
+
+    tensorContractWith_A ::  (Int,Int,a -> a -> a,a) -> Tensor a -> Tensor a 
+    tensorContractWith_A (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
+                        where 
+                                newrank = rankMinus rank (1,1,0,0,0,0)
+                                g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_A (i,j) x))
+
+
+    tensorContractWith_I :: (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
+    tensorContractWith_I (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
+                        where 
+                                newrank = rankMinus rank (0,0,1,1,0,0)
+                                g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_I (i,j) x))
+
+    tensorContractWith_a :: (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
+    tensorContractWith_a (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
+                        where 
+                                newrank = rankMinus rank (0,0,0,0,1,1)
+                                g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_a (i,j) x))
+
+
+    tensorContractWith :: [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> Tensor a -> Tensor a
+    tensorContractWith inds_A inds_I inds_a t = (c_A.c_I.c_a) t
+                                where
+                                        c_A = \x1 -> foldr tensorContractWith_A x1 inds_A 
+                                        c_I = \x2 -> foldr tensorContractWith_I x2 inds_I
+                                        c_a = \x3 -> foldr tensorContractWith_a x3 inds_a
 
 
     --furthermore we need a function that allows us to insert specific values for some of the indices of a given tensor
