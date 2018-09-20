@@ -252,7 +252,7 @@ evalRangeTensor1, evalRangeTensor
                 | otherwise = error "wrong index slot to insert value"
                  where g (a,b) n = (a,b,n) 
 
-    evalFullTensor :: [(Int,Int)] -> Tensor a -> [Tensor a]
+    evalFullTensor ::  [(Int,Int)] -> Tensor a -> [Tensor a]
     evalFullTensor k t = foldr g [t] k
                 where g = \x y -> concat (map (evalFullTensor1 x) y )
 

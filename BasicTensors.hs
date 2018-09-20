@@ -1,4 +1,4 @@
-module Involutive (
+module BasicTensors (
     symIndList, symMult2_a, symMultMap2_a, isAreaOrdered, areaDofList, areaMult, areaMultMap, deltaF_a, delta_a,
     deltaF_I, delta_I, deltaF_A, delta_A, interMap_I, interF_I, inter_I, interF_J, inter_J,
     interMap_A, canonicalizeArea, inter_A, interF_B, inter_B, interMetric, interArea
