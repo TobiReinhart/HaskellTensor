@@ -1,7 +1,9 @@
 module BasicTensors (
     symIndList, symMult2_a, symMultMap2_a, isAreaOrdered, areaDofList, areaMult, areaMultMap, deltaF_a, delta_a,
     deltaF_I, delta_I, deltaF_A, delta_A, interMap_I, interF_I, inter_I, interF_J, inter_J,
-    interMap_A, canonicalizeArea, inter_A, interF_B, inter_B, interMetric, interArea
+    interMap_A, canonicalizeArea, inter_A, interF_B, inter_B, interMetric, interArea, ivarTensor1List, 
+    ivarTensor2List, ivarTensor3List, ivarTensor1F, ivarTensor2F, ivarTensor3F, 
+    ivar1Tensor, ivar2Tensor, ivar3Tensor
 
 ) where
     
@@ -225,4 +227,14 @@ module BasicTensors (
     ivarTensor3F :: (Num a) => Index -> Ivar a
     ivarTensor3F ([],[a],[],[b],[],[]) = number2Ivar $ (fromEnum a)*10 + (fromEnum b) + 105
     ivarTensor3F j = error "function ivarTensor3F evaluated at wrong index"
-         
+
+    --now defien the Tensors
+
+    ivar1Tensor :: (Num a) => Tensor (Ivar a)
+    ivar1Tensor = Tensor (0,1,0,0,0,0) ivarTensor1F
+
+    ivar2Tensor :: (Num a) => Tensor (Ivar a)
+    ivar2Tensor = Tensor (0,1,0,0,0,1) ivarTensor2F
+
+    ivar3Tensor :: (Num a) => Tensor (Ivar a)
+    ivar3Tensor = Tensor (0,1,0,1,0,0) ivarTensor3F

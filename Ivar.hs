@@ -10,7 +10,7 @@
 
 module Ivar (
 Ivar, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, addIvar, sMultIvar, subIvar, mkAllIvarsList,
-mkAllIvars, number2Ivar
+mkAllIvars, number2Ivar, ivar2Number 
     ) where
     
     import Data.List
@@ -22,8 +22,13 @@ mkAllIvars, number2Ivar
 
     --Ivar contains a number (constants) a vector of ivars and its length
     
-    data Ivar a = Ivar a [a] Int deriving (Show, Eq, Ord)
+    data Ivar a = Ivar a [a] Int deriving (Eq, Ord)
 
+    instance (Show a, Num a, Eq a) => Show (Ivar a) where
+        show (Ivar num l i) =  (show num) ++ "*" ++ "V" ++ ( show (ivar2Number (Ivar num l i)) )
+
+            
+            
     --as we do not want to export the constructor we need functions that return the approp. values stored by Ivar
 
     getIvarScalar :: Ivar a -> a 
@@ -79,6 +84,11 @@ mkAllIvars, number2Ivar
     --indexing starts at 0 (careful where this might cause additional problems)
 
     number2Ivar :: (Num a) => Int -> Ivar a
-    number2Ivar i = mkIvar 0 l 315
+    number2Ivar i = mkIvar 1 l 315
                 where 
                     l = (replicate (315-(i+1)) 0) ++ ( 1 : (replicate ((i+1)-1) 0))
+
+    ivar2Number :: (Eq a, Num a) => Ivar a -> Int
+    ivar2Number (Ivar num l i) = i - (length zeros)
+                 where zeros = takeWhile (\x -> x == 0) l 
+

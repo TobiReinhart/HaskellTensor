@@ -4,7 +4,8 @@ Rank, Tensor(..),
 checkIndex, getRank, getTensorFunction, getValue, getRangeList, getIndexRange, mkTensorMap,
 tensorSMult, tensorAdd, tensorSub, tensorTranspose, tensorBlockTranspose, symmetrizeTensor,aSymmetrizeTensor,
 blockSymmetrizeTensor, ordSubLists2, cyclicSymmetrizeTensor, symTensor, rankPlus, rankMinus, safeSplitAt,
-splitInds, tensorProduct, tensorContract_A, tensorContract_I, tensorContract_a, tensorContract,
+splitInds, tensorProduct, tensorProductWith, tensorContract_A, tensorContract_I, tensorContract_a, tensorContract,
+tensorContractWith_a, tensorContractWith_I, tensorContractWith_A, tensorContractWith,
 rankReduce, evalTensor1, evalTensor, rankLength, tensorFlatten, evalFullTensor1, evalFullTensor,
 evalRangeTensor1, evalRangeTensor
     ) where 
@@ -221,29 +222,34 @@ evalRangeTensor1, evalRangeTensor
 
 
     --in order to deal with the Ivar entries in the Eqns we need to be able to Contract Tensor with elements that are no instance of Num
-    --i.e. where the + function is constracted by hand
+    --i.e. where the + function is constructed by hand
 
-    tensorContractWith_A ::  (Int,Int,a -> a -> a,a) -> Tensor a -> Tensor a 
+
+    --position specified in (Int,Int) starts at 0 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    --same in evalTensor !!!!
+
+    tensorContractWith_A :: (Int,Int,a -> a -> a,a) -> Tensor a -> Tensor a 
     tensorContractWith_A (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (1,1,0,0,0,0)
                                 g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_A (i,j) x))
 
 
-    tensorContractWith_I :: (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
+    tensorContractWith_I ::  (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
     tensorContractWith_I (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (0,0,1,1,0,0)
                                 g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_I (i,j) x))
 
-    tensorContractWith_a :: (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
+    tensorContractWith_a ::  (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
     tensorContractWith_a (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (0,0,0,0,1,1)
                                 g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_a (i,j) x))
 
 
-    tensorContractWith :: [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> Tensor a -> Tensor a
+    tensorContractWith ::  [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> Tensor a -> Tensor a
     tensorContractWith inds_A inds_I inds_a t = (c_A.c_I.c_a) t
                                 where
                                         c_A = \x1 -> foldr tensorContractWith_A x1 inds_A 

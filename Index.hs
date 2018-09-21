@@ -212,6 +212,8 @@ contractionList_a (i,j) (a,b) = zip c d
                         c = map (\x1 -> insertElem i x1 a) (fromList2U_a [0..3])
                         d = map (\x2 -> insertElem j x2 b) (fromList2L_a [0..3])
 
+
+
 contractionIndex_A :: (Int,Int) -> Index -> [Index]
 contractionIndex_A k (a,b,c,d,e,f) = [(fst x, snd x,c,d,e,f) | x <- contractionList_A k (a,b)]
 
