@@ -125,7 +125,7 @@ module BasicTensors (
     interF_J ind = error "wrong number of indices"
     
     inter_J :: (Fractional a) => Tensor a
-    inter_J = Tensor (0,0,1,0,0,2) interF_J
+    inter_J = Tensor (0,0,0,1,2,0) interF_J
 
     --now the same for the area metric intertwiner
 

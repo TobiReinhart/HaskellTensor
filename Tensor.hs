@@ -95,6 +95,10 @@ evalRangeTensor1, evalRangeTensor
     
                     
     --next we define a function that transposes a tensor, i.e. swoops its indices
+
+    --does (Int,Int) start at 0 or 1?????!!!
+
+    --probably 0
     
     tensorTranspose :: Int -> (Int,Int) -> Tensor a -> Tensor a
     tensorTranspose i j (Tensor rank f) = (Tensor rank g)
@@ -195,6 +199,7 @@ evalRangeTensor1, evalRangeTensor
                                 newrank = rankMinus rank (1,1,0,0,0,0)
                                 g = \x -> foldl (+) 0 (map (getValue (Tensor rank  f))  (contractionIndex_A k x))
 
+
     tensorContract_I :: (Num a) => (Int,Int) -> Tensor a -> Tensor a 
     tensorContract_I k (Tensor rank f) = Tensor newrank g
                         where 
@@ -234,7 +239,6 @@ evalRangeTensor1, evalRangeTensor
                         where 
                                 newrank = rankMinus rank (1,1,0,0,0,0)
                                 g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_A (i,j) x))
-
 
     tensorContractWith_I ::  (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
     tensorContractWith_I (i,j,plus,zero) (Tensor rank f) = Tensor newrank g

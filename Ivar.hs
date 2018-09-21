@@ -22,12 +22,22 @@ mkAllIvars, number2Ivar, ivar2Number
 
     --Ivar contains a number (constants) a vector of ivars and its length
     
+    --probably too slow
+
+    
+
     data Ivar a = Ivar a [a] Int deriving (Eq, Ord)
 
     instance (Show a, Num a, Eq a) => Show (Ivar a) where
-        show (Ivar num l i) =  (show num) ++ "*" ++ "V" ++ ( show (ivar2Number (Ivar num l i)) )
-
+        show (Ivar num l i) 
+            | inum == 0 = (show num)
+            | otherwise = (show num) ++ "*" ++ "V" ++ ( show (inum) )
+             where 
+                inum = ivar2Number (Ivar num l i)
             
+   --V0 is not displayed as it is the case where there is no variable            
+
+          
             
     --as we do not want to export the constructor we need functions that return the approp. values stored by Ivar
 

@@ -169,8 +169,7 @@ removeElem i b
             where x = splitAt i b
                   lb = length b
 
---there is a problem !!! -> Problem solved (in TensorContraction)
-
+                  
 insertElem :: (Eq a) => Int -> a -> [a] -> [a]
 insertElem i ins b
     | i > lb || i < 0 = error ("insert position out of index range " ++ "index pos =" ++ (show i) ++ "length = " ++ (show lb))
@@ -203,8 +202,8 @@ contractionList_A (i,j) (a,b) = zip c d
 contractionList_I :: (Int,Int) -> (Uinds_I,Linds_I) -> [(Uinds_I,Linds_I)]
 contractionList_I (i,j) (a,b) = zip c d
                 where 
-                        c = map (\x1 -> insertElem i x1 a) (fromList2U_I [0..10])
-                        d = map (\x2 -> insertElem j x2 b) (fromList2L_I [0..10])
+                        c = map (\x1 -> insertElem i x1 a) (fromList2U_I [0..9])
+                        d = map (\x2 -> insertElem j x2 b) (fromList2L_I [0..9])
         
 contractionList_a :: (Int,Int) -> (Uinds_a,Linds_a) -> [(Uinds_a,Linds_a)]
 contractionList_a (i,j) (a,b) = zip c d
@@ -216,6 +215,7 @@ contractionList_a (i,j) (a,b) = zip c d
 
 contractionIndex_A :: (Int,Int) -> Index -> [Index]
 contractionIndex_A k (a,b,c,d,e,f) = [(fst x, snd x,c,d,e,f) | x <- contractionList_A k (a,b)]
+
 
 contractionIndex_I :: (Int,Int) -> Index -> [Index]
 contractionIndex_I k (a,b,c,d,e,f) = [(a,b,fst x, snd x,e,f) | x <- contractionList_I k (c,d)]
