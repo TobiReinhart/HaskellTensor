@@ -9,23 +9,38 @@
 
 
 module Ivar (
-
-
+Ivar, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, addIvar, sMultIvar, subIvar
     ) where
     
     import Data.List
     import System.IO 
-    import Pde
+    
 
 
     --specify an Ivar Vector by its entry list and its length (for the safe constructor)
+
+    --Ivar contains a number (constants) a vector of ivars and its length
     
-    data Ivar a = Ivar [a] Int deriving (Show, Eq, Ord)
+    data Ivar a = Ivar a [a] Int deriving (Show, Eq, Ord)
+
+    --as we do not want to export the constructor we need functions that return the approp. values stored by Ivar
+
+    getIvarScalar :: Ivar a -> a 
+    getIvarScalar (Ivar s l i) = s
+
+    getIvarVec :: Ivar a -> [a]
+    getIvarVec (Ivar s l i) = l
+
+    getIvarLength :: Ivar a -> Int
+    getIvarLength (Ivar s l i ) = i
     
-    mkIvar :: (Num a) => [a] -> Int -> Ivar a
-    mkIvar vec i 
+    mkIvar :: (Num a) => a -> [a] -> Int -> Ivar a
+    mkIvar num vec i 
             | length vec /= i = error "entry list does not fir the specified length"
-            | otherwise = Ivar vec i
+            | otherwise = Ivar num vec i
+
+    zeroIvar :: (Num a) => Int -> Ivar a
+    zeroIvar i = Ivar 0 (replicate i 0) i 
 
     addListComps :: (Num a) => [a] -> [a] -> [a]
     addListComps [] [] = []
@@ -33,12 +48,12 @@ module Ivar (
     addListComps (x:xs) (y:ys) = (x+y) : addListComps xs ys
 
     addIvar :: (Num a) => Ivar a -> Ivar a -> Ivar a
-    addIvar (Ivar l1 i1) (Ivar l2 i2) 
+    addIvar (Ivar num1 l1 i1) (Ivar num2 l2 i2) 
             | i1 /= i2 = error "Ivars must be of same length to be able ot add"
-            | otherwise = Ivar (addListComps l1 l2) i1
+            | otherwise = Ivar  (num1+num2) (addListComps l1 l2) i1
 
     sMultIvar :: (Num a) => a -> Ivar a -> Ivar a
-    sMultIvar x (Ivar l i) = Ivar (map ((*) x) l) i
+    sMultIvar x (Ivar num l i) = Ivar (x*num) (map ((*) x) l) i
 
     --the only thing missing is a derivative function
 
@@ -51,12 +66,4 @@ module Ivar (
 
     --for first order derivatives only
 
-    --check if the derivative yields zero (otherwise it is just given by subtraction of inds)
-
-    isDerivable1 :: (Num a, Eq a, Ord a) => MultiIndex -> Ivar a -> Bool
-    isDerivable1 mult (Ivar l2 j) 
-            | i /= j = error "derivative mult ind must be length as ivar vec"
-            | l2 !! (multIndex1toNumber mult) /= 0 = True
-            | otherwise = False
-             where 
-                i = lengthMult mult
+    

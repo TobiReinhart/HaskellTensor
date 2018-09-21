@@ -1,7 +1,9 @@
 --this is the module for dealing with pdes
 
 module Pde (
-    MultiIndex, multIndex1toNumber, lengthMult
+    MultiIndex, diffOrder, diffOrderMult, lengthMult, mkMultiIndex, multIndgetList, cartProdList, mkAllMultiIndsList, mkAllMultiInds,
+    mkAllMultiIndsUpto, addLists, addMultiInds, getValue, Pde, isRightMultInd, removeZeros, mkPde, prolongPdeConstCoeff, combinePdes,
+    combinePdesWith, multIndNumberMap, multIndex1toNumber, numbertoMultIndex1, isDerivable1, deriveIvar, prolongPdeIvar
     ) where
 
     import Data.List
@@ -12,6 +14,7 @@ module Pde (
     import Numeric.Natural
     import qualified Data.Map.Strict as Map
     import Data.Maybe
+    import Ivar
 
     --main idea is pde = Map from (Multindex,dvar) to number
 
@@ -96,8 +99,8 @@ module Pde (
 
     --extract the value of a given pde
 
-    getValue :: Pde a -> (MultiIndex,Int) -> Maybe a
-    getValue (Pde dvar ivar ord  map) (ind,var) 
+    getPdeValue :: Pde a -> (MultiIndex,Int) -> Maybe a
+    getPdeValue (Pde dvar ivar ord  map) (ind,var) 
             | diffOrderMult ind > ord = error "difforder of MultiInd is higher than pde ord"
             | 0 < var && var  < dvar = error "pde is evaluated at dvar that ist higher as number of dvars"
             | lengthMult ind /= ivar = error "MultiIndex has wrong length compared to number of ivars"
@@ -133,24 +136,22 @@ module Pde (
     prolongPdeConstCoeff :: MultiIndex -> Pde a -> Pde a
     prolongPdeConstCoeff i (Pde dvar ivar ord map) = Pde dvar ivar (ord + diffOrderMult i)  (Map.mapKeys (\x -> (addMultiInds i (fst x), snd x)) map) 
 
-    --we need to store the information of the possible present ivar in a 
-
-    --from the pde in tensor from we can extract a second "pde" where for each equation, for each ivar we store 
-    --the corresponding (multiIndex,dvar) times factor in a map 
-
-    type IvarMap a = Map.Map Int ((MultiIndex,Int),a)
-
-    --this map must be extracted for each eqn from the tensor pdes
-
-    --each time we prolong an equation we check if a t the corresponding ivar (multIndNumberMap) we have an entry in the IvarMap
-    --if so we insert it into the map !!
+    --combine parts of the same pde
     
     combinePdes :: (Num a) => Pde a -> Pde a -> Pde a
     combinePdes (Pde dvar1 ivar1 ord1 map1) (Pde dvar2 ivar2 ord2 map2)
             | dvar1 /= dvar2 = error "cannot combine 2 pdes with different dvars"
             | ivar1 /= ivar2 = error "cannot combine 2 pdes with different ivars"
-            |  otherwise = Pde dvar1 ivar1 (ord1 + ord2) (Map.unionWith (+) map1 map2)
+            |  otherwise = Pde dvar1 ivar1 (max ord1 ord2) (Map.unionWith (+) map1 map2)
 
+
+    combinePdesWith :: (a -> a -> a) -> Pde a -> Pde a -> Pde a
+    combinePdesWith plus (Pde dvar1 ivar1 ord1 map1) (Pde dvar2 ivar2 ord2 map2)
+            | dvar1 /= dvar2 = error "cannot combine 2 pdes with different dvars"
+            | ivar1 /= ivar2 = error "cannot combine 2 pdes with different ivars"
+            |  otherwise = Pde dvar1 ivar1 (max ord1 ord2) (Map.unionWith plus map1 map2)
+
+        
     --we need to print the pde in maple form
 
     --carefull how we translate between multiInds and Numbers (consistency)
@@ -165,24 +166,49 @@ module Pde (
             | otherwise = i - (length zeros)
              where zeros = takeWhile (\x -> x == 0) l 
 
-    --this function prolongs the type of pde we get from the equivariance equaitons (given the additional information of the IvarMap)         
-    
-    --the IvarMap must be extracted from the tensor pde system
-
-    prolongPde :: (Num a) => MultiIndex -> Pde a -> IvarMap a -> Pde a
-    prolongPde ind (Pde i j n map) ivarmap 
-            | (diffOrderMult ind) /= 1 = error "for the moment only works for 1 prolongations"
-            | isJust l = Pde i j n $  Map.insertWith (+) ( fst entry ) ( snd entry ) map
-            | otherwise = (Pde i j n map) 
-                    where l = Map.lookup (multIndex1toNumber ind) ivarmap
-                          entry = fromJust $ Map.lookup (multIndex1toNumber ind) ivarmap
-
     numbertoMultIndex1 :: Int -> Int -> MultiIndex
     numbertoMultIndex1 i j = mkMultiIndex i 1 l
             where l = (replicate (i-j) 0) ++ ( 1 : (replicate (j-1) 0))
 
             
-    --it is probably better to encode the non constant coeffs in the pde directly in the tensors that it is constructed from
+--the information about the ivars in the pde is encoded in the tensors
 
+--once we extract the pde we have ivars stored in the pde (must be taken care when prolonging)
+
+--we need derivative functions for the ivars
+
+    --check if the derivative yields zero (otherwise it is just given by subtraction of inds)
+
+    isDerivable1 :: (Num a, Eq a, Ord a) => MultiIndex -> Ivar a -> Bool
+    isDerivable1 mult var
+            | i /= j = error "derivative mult ind must be length as ivar vec"
+            | l !! (multIndex1toNumber mult) /= 0 = True
+            | otherwise = False
+              where 
+                num = getIvarScalar var
+                l = getIvarVec var
+                j = getIvarLength var 
+                i = lengthMult mult
+  
+    deriveIvar :: (Num a,Eq a) => MultiIndex -> Ivar a -> Ivar a
+    deriveIvar mult ivar 
+            | i /= j = error "derivative mult ind must be length as ivar vec"
+            | entry /= 0 = mkIvar entry (replicate j 0) j
+            | otherwise = zeroIvar j
+              where 
+                 num = getIvarScalar ivar
+                 l = getIvarVec ivar
+                 j = getIvarLength ivar 
+                 i = lengthMult mult
+                 entry = l !! (multIndex1toNumber mult)
+
+    --the function a -> a is the derivative function for the elements
+
+    prolongPdeIvar :: (Num a,Ord a) => MultiIndex  -> Pde (Ivar a) -> Pde (Ivar a)
+    prolongPdeIvar mult (Pde i j n map1) = combinePdesWith f (prolongPdeConstCoeff mult (Pde i j n map1)) pde2
+        where 
+            f = addIvar
+            map2 =  Map.map (deriveIvar mult) (Map.filter (isDerivable1 mult) map1) 
+            pde2 = Pde i j n map2
 
 
