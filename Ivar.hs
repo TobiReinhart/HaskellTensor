@@ -9,7 +9,8 @@
 
 
 module Ivar (
-Ivar, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, addIvar, sMultIvar, subIvar
+Ivar, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, addIvar, sMultIvar, subIvar, mkAllIvarsList,
+mkAllIvars, number2Ivar
     ) where
     
     import Data.List
@@ -64,6 +65,20 @@ Ivar, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, 
     subIvar :: (Num a) => Ivar a -> Ivar a -> Ivar a
     subIvar i j = addIvar i (sMultIvar (-1) j) 
 
-    --for first order derivatives only
+    --construct all ivars of given length
 
+    mkAllIvarsList :: (Num a) => Int -> [[a]]
+    mkAllIvarsList 1 = [[1]]
+    mkAllIvarsList i =  l ++ [1 : (replicate (i-1) 0)]
+            where l = zipWith (:) (repeat 0) (mkAllIvarsList (i-1))
+            
+    mkAllIvars :: (Num a) => Int -> [Ivar a]
+    mkAllIvars i =  map (\x -> mkIvar 0 x i) (mkAllIvarsList i) 
     
+
+    --indexing starts at 0 (careful where this might cause additional problems)
+
+    number2Ivar :: (Num a) => Int -> Ivar a
+    number2Ivar i = mkIvar 0 l 315
+                where 
+                    l = (replicate (315-(i+1)) 0) ++ ( 1 : (replicate ((i+1)-1) 0))

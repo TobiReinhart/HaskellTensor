@@ -10,7 +10,6 @@ module Pde (
     import System.IO
     import Index
     import Tensor
-    import BasicTensors
     import Numeric.Natural
     import qualified Data.Map.Strict as Map
     import Data.Maybe
@@ -212,3 +211,5 @@ module Pde (
             pde2 = Pde i j n map2
 
 
+   --the only part that is still unclear is how to convert the result of the tensor evaluation to a pde ??
+  

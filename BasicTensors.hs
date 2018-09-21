@@ -7,6 +7,8 @@ module BasicTensors (
     
     import Index
     import Tensor
+    import Ivar
+    import Pde
     import Data.List
     import qualified Data.Map.Strict as Map
     import Data.Tuple
@@ -192,4 +194,35 @@ module BasicTensors (
                     i = inter_A
                     j = inter_B
                     prod = tensorProduct i j
-                    
+
+    --we need 3 more tensors that store the three different rnages of values of ivars
+
+    ivarTensor1List :: (Num a) => [Ivar a]
+    ivarTensor1List =  take 21 $ mkAllIvars 315
+
+    ivarTensor2List :: (Num a) => [Ivar a]
+    ivarTensor2List = take (4*21) $ drop 21 $ mkAllIvars 315
+
+    ivarTensor3List :: (Num a) => [Ivar a]
+    ivarTensor3List = take (10*21) $ drop (5*21) $ mkAllIvars 315
+
+    --now construct the corresponding tensors
+
+    --we need the functions for constructing the tensor (number2Ivar in Ivar)
+
+    --now we can construct the 3 functions
+    
+    ivarTensor1F :: (Num a) => Index -> Ivar a
+    ivarTensor1F  ([],[a],[],[],[],[]) =  number2Ivar (fromEnum a)  
+    ivarTensor1F l = error "function ivarTensor1F is evaluated at wrong index"
+
+    --we eval the geomatry index in the outer loop and the spacetime index in the inner loop
+
+    ivarTensor2F :: (Num a) => Index -> Ivar a
+    ivarTensor2F ([],[a],[],[],[],[b]) = number2Ivar $ (fromEnum a)*4 + (fromEnum b) + 21
+    ivarTensor2F j = error "function ivarTensor2F evaluated at wrong index"
+
+    ivarTensor3F :: (Num a) => Index -> Ivar a
+    ivarTensor3F ([],[a],[],[b],[],[]) = number2Ivar $ (fromEnum a)*10 + (fromEnum b) + 105
+    ivarTensor3F j = error "function ivarTensor3F evaluated at wrong index"
+         
