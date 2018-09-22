@@ -1,5 +1,5 @@
 module BasicTensors (
-    symIndList, symMult2_a, symMultMap2_a, isAreaOrdered, areaDofList, areaMult, areaMultMap, deltaF_a, delta_a,
+    symIndList, symEvalList2, symEvalList3, symMult2_a, symMultMap2_a, isAreaOrdered, areaDofList, areaMult, areaMultMap, deltaF_a, delta_a,
     deltaF_I, delta_I, deltaF_A, delta_A, interMap_I, interF_I, inter_I, interF_J, inter_J,
     interMap_A, canonicalizeArea, inter_A, interF_B, inter_B, interMetric, interArea, ivarTensor1List, 
     ivarTensor2List, ivarTensor3List, ivarTensor1F, ivarTensor2F, ivarTensor3F, 
@@ -25,6 +25,26 @@ module BasicTensors (
             | n == 1 = [ [a] | a <- [0..j] ]
             | otherwise = [ a ++ [b] | a <- (symIndList (n-1) j), b <- [(last a)..j] ] 
 
+    --the following 2 functions generate the lists that are needed for contractions with symmetric indices
+
+    --the first Int specifies the indexposition second and third the 2 indices in the corresponding slot that are to be evaluated
+
+    symEvalList2 ::  (Int,Int,Int) -> [[(Int,Int,Int)]]
+    symEvalList2 (i,j,k)   
+            | i == 1 || i == 2 = zipWith (\x y -> [x,y]) (map (\x -> (i,j,x !! 0)) (symIndList 2 20)) (map (\x -> (i,k,x !! 1)) (symIndList 2 20))
+            | i == 3 || i == 4 = zipWith (\x y -> [x,y]) (map (\x -> (i,j,x !! 0)) (symIndList 2 9)) (map (\x -> (i,k,x !! 1)) (symIndList 2 9))
+            | i == 5 || i == 6 = zipWith (\x y -> [x,y]) (map (\x -> (i,j,x !! 0)) (symIndList 2 3)) (map (\x -> (i,k,x !! 1)) (symIndList 2 3))
+            | otherwise = error "wrong indexposition for evaluating tensor over 2 sym inds"
+
+    symEvalList3 ::  (Int,Int,Int,Int) -> [[(Int,Int,Int)]]
+    symEvalList3 (i,j,k,l)   
+            | i == 1 || i == 2 = zipWith3 (\x y z -> [x,y,z]) (map (\x -> (i,j,x !! 0)) (symIndList 3 20)) (map (\x -> (i,k,x !! 1)) (symIndList 3 20)) (map (\x -> (i,l,x !! 2)) (symIndList 3 20))
+            | i == 3 || i == 4 = zipWith3 (\x y z -> [x,y,z]) (map (\x -> (i,j,x !! 0)) (symIndList 3 9)) (map (\x -> (i,k,x !! 1)) (symIndList 3 9)) (map (\x -> (i,l,x !! 2)) (symIndList 3 9))
+            | i == 5 || i == 6 = zipWith3 (\x y z -> [x,y,z]) (map (\x -> (i,j,x !! 0)) (symIndList 3 3)) (map (\x -> (i,k,x !! 1)) (symIndList 3 3)) (map (\x -> (i,l,x !! 2)) (symIndList 3 3))
+            | otherwise = error "wrong indexposition for evaluating tensor over 2 sym inds"
+
+    --eval tensor over sym inds can now be archieved by mapping evalTensor over symEvalListi 
+
     --map of symmetric index tuples and corresponding multiplicity
 
     symMult2_a :: (Num a) => [Int] -> a
@@ -37,6 +57,8 @@ module BasicTensors (
     symMultMap2_a = let a = symIndList 2 3 in Map.fromList $ zip a $ map symMult2_a a  
 
     --now the same for the are metric
+
+    --this function is slow!!!!
 
     isAreaOrdered :: (Num a, Ord a) => [a] -> Bool
     isAreaOrdered [a,b,c,d] 
@@ -137,6 +159,8 @@ module BasicTensors (
     --we need a function that canonically sorts the area metric indices and computes the corresponding sign
 
     --does not test for index ranges
+
+    --this is slow!!!!!! (there are some safety checks in isAreaOrdered)
 
     canonicalizeArea :: (Num a) => (a,[Int]) -> (a,[Int])
     canonicalizeArea (i,[a,b,c,d]) 

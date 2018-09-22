@@ -65,10 +65,12 @@ eqn1_3Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)
                 t = evalFullTensor [(6,0),(5,0)] eqn1_3   
 
 
+test :: (Fractional a) => [Tensor a]
+test = map (\x -> evalTensor x inter_J) $ symEvalList2 (5,0,1) 
 
 
 main = do
-    putStrLn $ show $ eqn1_3Comps !! 0
+    putStrLn $ show $ map (\x -> getValue x (indexList [] [] [] [9] [] [])) test
 
 
 

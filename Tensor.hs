@@ -24,6 +24,8 @@ evalRangeTensor1, evalRangeTensor
     --check if a given index fits the valence of a tensor (this function checks if the given Index is valid for the given tensor)
     
     --should be built in the constructor of tensor
+
+    --this is slow !!!!!!!!!!!!!!!
     
     checkIndex :: Index -> Rank -> Bool
     checkIndex (i1,i2,i3,i4,i5,i6) (r1,r2,r3,r4,r5,r6) 
@@ -48,6 +50,8 @@ evalRangeTensor1, evalRangeTensor
     --everytime we read out values we check if the index fits the rank (this function is for full evaluation)
 
     --values should always be read out using getValue !!! (if it is not too slow)
+
+    --it is slow !!!!!!!!!!!!!
     
     getValue :: (Tensor a) -> Index -> a
     getValue (Tensor rank f) ind 
@@ -154,10 +158,12 @@ evalRangeTensor1, evalRangeTensor
 
     --there is the problem !!!
 
+    --determining the length makes it probably slow
+
+    --but it makes it safer
+
     safeSplitAt :: (Eq a) =>  Int -> [a] -> ([a],[a])
     safeSplitAt i l 
-                | l == [] = ([],[])
-                | i == 0 = ([],l)
                 | i > length l = error "not enough elements in list"
                 | otherwise = splitAt i l
 
@@ -290,6 +296,10 @@ evalRangeTensor1, evalRangeTensor
 
     evalTensor :: [(Int,Int,Int)] -> Tensor a -> Tensor a
     evalTensor k t = foldr evalTensor1 t k 
+
+    --we also need a fucntion to evaluat tensors with symmetries
+
+    --this can be done with evalTensor with the appropriate lists
 
     --the next function is for evaluating a tensor in the full range of the indices that correspond to a given list of slots
 
