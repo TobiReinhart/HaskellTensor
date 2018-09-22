@@ -3,7 +3,7 @@ module BasicTensors (
     deltaF_I, delta_I, deltaF_A, delta_A, interMap_I, interF_I, inter_I, interF_J, inter_J,
     interMap_A, canonicalizeArea, inter_A, interF_B, inter_B, interMetric, interArea, ivarTensor1List, 
     ivarTensor2List, ivarTensor3List, ivarTensor1F, ivarTensor2F, ivarTensor3F, 
-    ivar1Tensor, ivar2Tensor, ivar3Tensor
+    ivar1Tensor, ivar2Tensor, ivar3Tensor, sym2_a, sym3_a
 
 ) where
     
@@ -262,3 +262,11 @@ module BasicTensors (
 
     ivar3Tensor :: (Num a) => Tensor (Ivar a)
     ivar3Tensor = Tensor (0,1,0,1,0,0) ivarTensor3F
+
+    --we also need symmetrizer for tensors with upper indices (an dfor the moment only for spacetimeindices)
+
+    sym2_a :: (Fractional a) => Tensor a
+    sym2_a = symmetrizeTensor 5 (0,1) $ tensorProduct delta_a delta_a
+
+    sym3_a :: (Fractional a) => Tensor a
+    sym3_a = cyclicSymmetrizeTensor 5 [0,1,2] $ tensorProduct delta_a $ tensorProduct delta_a delta_a 
