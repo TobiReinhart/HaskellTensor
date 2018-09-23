@@ -6,7 +6,7 @@ module BasicTensors (
     ivar1Tensor, ivar2Tensor, ivar3Tensor, sym2_a, sym3_a,
     eqn1_1, eqn1_1Comps, eqn1_2Intertwiner, eqn1_2, eqn1_2Comps, eqn1_3Intertwiner, eqn1_3, eqn1_3Comps, eqn1_4Comps, 
     eqn2_1Comps, eqn2_2, eqn2_2Comps, eqn2_3Inter, eqn2_3, eqn2_3Comps, eqn2_4Comps,
-    eqn3_1Comps, eqn3_2Comps, eqn3_3Inter, eqn3_3, eqn3_4Comps
+    eqn3_1Comps, eqn3_2Comps, eqn3_3Inter, eqn3_3, eqn3_3Comps, eqn3_4Comps
 
 ) where
     
@@ -401,7 +401,8 @@ module BasicTensors (
     eqn2_2Comps :: Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
     eqn2_2Comps intArea sym2 ivar1 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(6,0)]) t2
             where
-              t1 = map (\x -> evalTensor x (eqn2_2 intArea sym2 ivar1)) $ symEvalList2 (5,0,1)
+              t1 = map (\x -> evalTensor x tens) $ symEvalList2 (5,0,1)
+              tens = eqn2_2 intArea sym2 ivar1
               t2 = concat $ map (evalFullTensor [(6,0)]) t1 
 
     --now the next block
@@ -428,13 +429,14 @@ module BasicTensors (
     eqn2_3Comps :: Tensor Double -> Tensor Double -> Tensor Double -> Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
     eqn2_3Comps intArea int_J sym2 del_A del_a ivar2 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t2
           where
-               t1 = map (\x -> evalTensor x (eqn2_3 intArea int_J sym2 del_A del_a ivar2)) $ symEvalList2 (5,0,1)
+               t1 = map (\x -> evalTensor x tens) $ symEvalList2 (5,0,1)
+               tens = eqn2_3 intArea int_J sym2 del_A del_a ivar2
                t2 = concat $ map (evalFullTensor [(6,0)]) t1 
 
     --again the last equation is zero
 
     eqn2_4Comps :: [[Ivar Double]]
-    eqn2_4Comps = replicate 40 $ replicate 210 $ zeroIvar 315
+    eqn2_4Comps = replicate 40 $ replicate 1 $ zeroIvar 315
 
 
     --now the last block
@@ -463,10 +465,11 @@ module BasicTensors (
     eqn3_3Comps :: Tensor Double -> Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
     eqn3_3Comps intArea int_J sym3 ivar1 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t2
          where 
-            t1 = map (\x -> evalTensor x (eqn3_3 intArea int_J sym3 ivar1)) $ symEvalList3 (5,0,1,2)
+            t1 = map (\x -> evalTensor x tens) $ symEvalList3 (5,0,1,2)
+            tens = eqn3_3 intArea int_J sym3 ivar1
             t2 = concat $ map (evalFullTensor [(6,0)]) t1 
 
     eqn3_4Comps :: [[Ivar Double]]
-    eqn3_4Comps = replicate 80 $ replicate 210 $ zeroIvar 315
+    eqn3_4Comps = replicate 80 $ replicate 1 $ zeroIvar 315
 
    

@@ -47,9 +47,33 @@ main = do
 
     --now we have all tensors
 
-    let test = (eqn1_1Comps interAreaTens ivar1TensorTens) 
+    --construct the equations
 
-    putStrLn  $ show test 
+    let e1_1 = eqn1_1Comps interAreaTens ivar1TensorTens
+    let e1_2 = eqn1_2Comps interAreaTens delta_aTens delta_ATens ivar2TensorTens
+    let e1_3 = eqn1_3Comps delta_ITens delta_ATens interMetricTens interAreaTens ivar3TensorTens
+    let e1_4 = eqn1_4Comps delta_aTens
+
+    let e2_1 = eqn2_1Comps
+    let e2_2 = eqn2_2Comps interAreaTens sym2_aTens ivar1TensorTens
+    let e2_3 = eqn2_3Comps interAreaTens inter_JTens sym2_aTens delta_ATens delta_aTens ivar2TensorTens
+    let e2_4 = eqn2_4Comps
+
+    let e3_1 = eqn3_1Comps
+    let e3_2 = eqn3_2Comps
+    let e3_3 = eqn3_3Comps interAreaTens inter_JTens sym3_aTens ivar1Tensor
+    let e3_4 = eqn3_4Comps
+
+    --combine the equaitons (for the moment as lists)
+
+    let e1 = zipWith4 (\a b c d -> a++b++c++d) e1_1  e1_2  e1_3  e1_4
+    let e2 = zipWith4 (\a b c d -> a++b++c++d) e2_1  e2_2  e2_3  e2_4
+    let e3 = zipWith4 (\a b c d -> a++b++c++d) e3_1  e3_2  e3_3  e3_4
+
+    let equation = e1++e2++e3
+
+
+    writeFile "DiffeoEqnsHaskell2.txt"  $ show equation
 
     --it seems to work
 
