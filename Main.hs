@@ -47,9 +47,11 @@ main = do
 
     --now we have all tensors
 
-    let test = eqn1_3Comps delta_ITens delta_ATens interMetricTens interAreaTens ivar3TensorTens
+    let test = (eqn1_1Comps interAreaTens ivar1TensorTens) 
 
-    writeFile "DiffeoEqnsHaskell1.txt" $ show test 
+    putStrLn  $ show test 
+
+    --it seems to work
 
 
 

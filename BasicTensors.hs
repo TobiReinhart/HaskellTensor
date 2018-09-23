@@ -6,7 +6,7 @@ module BasicTensors (
     ivar1Tensor, ivar2Tensor, ivar3Tensor, sym2_a, sym3_a,
     eqn1_1, eqn1_1Comps, eqn1_2Intertwiner, eqn1_2, eqn1_2Comps, eqn1_3Intertwiner, eqn1_3, eqn1_3Comps, eqn1_4Comps, 
     eqn2_1Comps, eqn2_2, eqn2_2Comps, eqn2_3Inter, eqn2_3, eqn2_3Comps, eqn2_4Comps,
-    eqn3_1Comps, eqn3_2Comps, eqn3_3Inter, eqn3_3, eqn3_3Inter, eqn3_4Comps
+    eqn3_1Comps, eqn3_2Comps, eqn3_3Inter, eqn3_3, eqn3_4Comps
 
 ) where
     
@@ -312,9 +312,9 @@ module BasicTensors (
     --t1 = interArea, t2 = ivar1Tensor
 
     eqn1_1 :: Tensor (Double) -> Tensor (Ivar Double) ->  Tensor (Ivar Double)
-    eqn1_1 t1 t2 = tensorContractWith_A (0,1,addIvar,zeroIvar 315) prod
+    eqn1_1 intArea ivar1 = tensorContractWith_A (0,1,addIvar,zeroIvar 315) prod
             where 
-                prod = tensorProductWith sMultIvar t1 t2 
+                prod = tensorProductWith sMultIvar intArea ivar1 
 
     --intArea = interArea, ivar1 = ivar1Tensor
 
