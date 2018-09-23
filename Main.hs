@@ -130,13 +130,60 @@ eqn2_3Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)
 eqn2_4Comps :: (Fractional a) => [[Ivar a]]
 eqn2_4Comps = replicate 40 $ replicate 210 $ zeroIvar 315
 
---combinen the blocks to one equations
+--combine the blocks to one equations
 
 eqn2 :: (Fractional a) => [[Ivar a]]
 eqn2 = zipWith4 (\a b c d -> a ++ b ++ c ++ d) eqn2_1Comps eqn2_2Comps eqn2_3Comps eqn2_4Comps
+
+--now the last block
+
+eqn3_1Comps :: (Fractional a) => [[Ivar a]]
+eqn3_1Comps = replicate 80 $ replicate 21 $ zeroIvar 315
+
+eqn3_2Comps :: (Fractional a) => [[Ivar a]]
+eqn3_2Comps = replicate 80 $ replicate 84 $ zeroIvar 315
+
+eqn3_3Inter :: (Fractional a) => Tensor a  
+eqn3_3Inter = tensorContract [] [] [(0,1),(1,2),(2,3)] t2
+        where 
+            t1 = tensorProduct inter_J interArea
+            t2 = tensorProduct t1 sym3_a
+
+eqn3_3 :: (Fractional a) => Tensor (Ivar a)
+eqn3_3 = tensorContractWith_A (0,1,addIvar,zeroIvar 315) t
+        where 
+            t = tensorProductWith sMultIvar eqn3_3Inter ivar1Tensor
+
+eqn3_3Comps :: (Fractional a) => [[Ivar a]]
+eqn3_3Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t2
+        where 
+            t1 = map (\x -> evalTensor x eqn3_3) $ symEvalList3 (5,0,1,2)
+            t2 = concat $ map (evalFullTensor [(6,0)]) t1 
+
+eqn3_4Comps :: (Fractional a) => [[Ivar a]]
+eqn3_4Comps = replicate 80 $ replicate 210 $ zeroIvar 315
+
+--combine the equations
+
+eqn3 :: (Fractional a) => [[Ivar a]]
+eqn3 = zipWith4 (\a b c d -> a ++ b ++ c ++ d) eqn3_1Comps eqn3_2Comps eqn3_3Comps eqn3_4Comps
+
+--and combine all equations
+
+alleqns :: (Fractional a) => [[Ivar a]]
+alleqns = eqn1 ++ eqn2 ++ eqn3 
+
+
+
+
+
+
+
+
+
 
 
 
 
 main = do
-    putStrLn $ show $ length eqn2
+    writeFile "DiffeoEqnsHaskell1.txt" $ show alleqns
