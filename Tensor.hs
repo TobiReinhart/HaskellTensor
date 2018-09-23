@@ -52,6 +52,10 @@ evalRangeTensor1, evalRangeTensor
     --values should always be read out using getValue !!! (if it is not too slow)
 
     --it is slow !!!!!!!!!!!!!
+
+    --use the function instead
+
+    --in the very and when we extract values possible wrong indices will be noticed
     
     getValue :: (Tensor a) -> Index -> a
     getValue (Tensor rank f) ind 
@@ -77,25 +81,25 @@ evalRangeTensor1, evalRangeTensor
     mkTensorMap (Tensor rank f) = Map.fromList ( zip indList valueList )
             where 
                     indList = getIndexRange rank 
-                    valueList = map (getValue (Tensor rank f)) indList
+                    valueList = map f indList
     
     --now start defining teh funcitons for the tensor algebra
     
     tensorSMult :: (Num a) => a -> Tensor a -> Tensor a
     tensorSMult i (Tensor rank f) = Tensor rank g
-                    where g = ((*) i).(getValue (Tensor rank f))
+                    where g = ((*) i).f
     
     tensorAdd :: (Num a) => Tensor a -> Tensor a -> Tensor a
     tensorAdd (Tensor rank1 f) (Tensor rank2 g) 
                     | rank1 == rank2 = Tensor rank1 h
                     | otherwise = error "cannot add tensors of different rank"
-                    where    h = \x -> ((getValue (Tensor rank2 g)) x) + ((getValue (Tensor rank1  f)) x)
+                    where    h = \x -> (g x) + (f x)
                     
     tensorSub :: (Num a) => Tensor a -> Tensor a -> Tensor a
     tensorSub (Tensor rank1 f) (Tensor rank2 g) 
                     | rank1 == rank2 = Tensor rank1 h
                     | otherwise = error "cannot add tensors of different rank"
-                    where    h = \x -> ((getValue (Tensor rank2  g))  x) - ((getValue (Tensor rank1  f))  x) 
+                    where    h = \x -> (g  x) - (f x) 
     
                     
     --next we define a function that transposes a tensor, i.e. swoops its indices
@@ -106,11 +110,11 @@ evalRangeTensor1, evalRangeTensor
     
     tensorTranspose :: Int -> (Int,Int) -> Tensor a -> Tensor a
     tensorTranspose i j (Tensor rank f) = (Tensor rank g)
-            where g = ((getValue (Tensor rank  f)) ).(interchangeInds i j)  
+            where g = f.(interchangeInds i j)  
     
     tensorBlockTranspose :: Int -> ([Int],[Int]) -> Tensor a -> Tensor a
     tensorBlockTranspose i j (Tensor rank f) = (Tensor rank g)
-            where g = (getValue (Tensor rank f)).(interchangeBlockInds i j)    
+            where g = f.(interchangeBlockInds i j)    
             
     --we need functions for symmetrizing tensors
 
@@ -160,7 +164,7 @@ evalRangeTensor1, evalRangeTensor
 
     --determining the length makes it probably slow
 
-    --but it makes it safer
+    --but it makes it safer (keep it like that for the moment)
 
     safeSplitAt :: (Eq a) =>  Int -> [a] -> ([a],[a])
     safeSplitAt i l 
@@ -183,10 +187,12 @@ evalRangeTensor1, evalRangeTensor
 
     --there is a problem with lists starting at zero !!!!!!
 
+    --here we must be carefull as we no longer use the safe evaluation 
+
     tensorProduct :: (Num a) => Tensor a -> Tensor a -> Tensor a
     tensorProduct (Tensor rank1 f) (Tensor rank2 g) = Tensor (rankPlus rank1 rank2) h
                  where 
-                    h = \x -> (getValue (Tensor rank1  f)  (fst (split x))) * (getValue (Tensor rank2  g)  (snd (split x)))
+                    h = \x -> (f  (fst (split x))) * (g (snd (split x)))
                     split = splitInds rank1
 
     --TensorProdukt with combiner function, for tensors with different typed entries
@@ -194,7 +200,7 @@ evalRangeTensor1, evalRangeTensor
     tensorProductWith ::   (a -> b -> c ) -> Tensor a -> Tensor b -> Tensor c
     tensorProductWith combine (Tensor rank1 f) (Tensor rank2 g) = Tensor (rankPlus rank1 rank2) h
                  where 
-                    h = \x -> combine (getValue (Tensor rank1  f)  (fst (split x)))  (getValue (Tensor rank2  g)  (snd (split x)))
+                    h = \x -> combine (f  (fst (split x)))  (g  (snd (split x)))
                     split = splitInds rank1
 
     --and the contraction of indices
@@ -203,20 +209,20 @@ evalRangeTensor1, evalRangeTensor
     tensorContract_A k (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (1,1,0,0,0,0)
-                                g = \x -> foldl (+) 0 (map (getValue (Tensor rank  f))  (contractionIndex_A k x))
+                                g = \x -> foldl (+) 0 (map f  (contractionIndex_A k x))
 
 
     tensorContract_I :: (Num a) => (Int,Int) -> Tensor a -> Tensor a 
     tensorContract_I k (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (0,0,1,1,0,0)
-                                g = \x -> foldl (+) 0 (map (getValue (Tensor rank  f))  (contractionIndex_I k x))
+                                g = \x -> foldl (+) 0 (map f  (contractionIndex_I k x))
 
     tensorContract_a :: (Num a) => (Int,Int) -> Tensor a -> Tensor a 
     tensorContract_a k (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (0,0,0,0,1,1)
-                                g = \x -> foldl (+) 0 (map (getValue (Tensor rank  f))  (contractionIndex_a k x))
+                                g = \x -> foldl (+) 0 (map f  (contractionIndex_a k x))
 
     --best to enter the indices thta are contracted beginning with the last index   
 
@@ -244,19 +250,19 @@ evalRangeTensor1, evalRangeTensor
     tensorContractWith_A (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (1,1,0,0,0,0)
-                                g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_A (i,j) x))
+                                g = \x -> foldl plus zero (map f  (contractionIndex_A (i,j) x))
 
     tensorContractWith_I ::  (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
     tensorContractWith_I (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (0,0,1,1,0,0)
-                                g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_I (i,j) x))
+                                g = \x -> foldl plus zero (map f  (contractionIndex_I (i,j) x))
 
     tensorContractWith_a ::  (Int,Int,a -> a -> a, a) -> Tensor a -> Tensor a 
     tensorContractWith_a (i,j,plus,zero) (Tensor rank f) = Tensor newrank g
                         where 
                                 newrank = rankMinus rank (0,0,0,0,1,1)
-                                g = \x -> foldl plus zero (map (getValue (Tensor rank  f))  (contractionIndex_a (i,j) x))
+                                g = \x -> foldl plus zero (map f  (contractionIndex_a (i,j) x))
 
 
     tensorContractWith ::  [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> [(Int,Int,a -> a -> a, a)] -> Tensor a -> Tensor a
@@ -288,7 +294,7 @@ evalRangeTensor1, evalRangeTensor
     evalTensor1 (i,j,k) (Tensor rank f) = Tensor newrank g
         where 
                 newrank = rankReduce i rank
-                g = \x -> (getValue (Tensor rank  f))  (insertIndex i j k x)
+                g = \x -> f  (insertIndex i j k x)
    
     --evals Tensor at multiple indicesspecified by the Int triples succesively (obviously only works for multiple indeices in the list)
 
@@ -333,7 +339,7 @@ evalRangeTensor1, evalRangeTensor
     tensorFlatten :: Tensor a -> a
     tensorFlatten (Tensor rank f) 
                 | rankLength rank /= 0 = error "can only flatten tensors of rank 1"
-                | otherwise = (getValue (Tensor rank  f))  ([],[],[],[],[],[])
+                | otherwise = f  ([],[],[],[],[],[])
 
 
 

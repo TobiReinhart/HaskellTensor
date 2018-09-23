@@ -1,189 +1,61 @@
 
 import Data.List
 import System.IO
+import qualified Data.Map.Strict as Map
+import Data.Maybe
 import Index
 import Tensor
 import BasicTensors
 import Pde
 import Ivar
 
---the first step is extracting the equations in list form
-
---start with the first block of 16 equations
-
-
-eqn1_1 :: (Fractional a) => Tensor (Ivar a)
-eqn1_1 = tensorContractWith_A (0,1,addIvar,zeroIvar 315) prod
-        where 
-            t1 = interArea
-            t2 = ivar1Tensor
-            prod = tensorProductWith sMultIvar t1 t2 
-
-eqn1_1Comps :: (Fractional a) => [[Ivar a]]
-eqn1_1Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0)]) t
-        where
-            t = evalFullTensor [(6,0),(5,0)] eqn1_1   
-
-
---now start extracting the next block of the pde
-
-eqn1_2Intertwiner :: (Fractional a) => Tensor a
-eqn1_2Intertwiner = tensorSub t1 t3
-            where 
-                t1 =  tensorProduct interArea delta_a
-                t2 = tensorTranspose 6 (0,1) $ tensorProduct delta_a delta_a
-                t3 = tensorProduct delta_A t2
-
-eqn1_2 :: (Fractional a) => Tensor (Ivar a)
-eqn1_2 = tensorContractWith [(0,1,addIvar,zeroIvar 315)] [] [(1,2,addIvar,zeroIvar 315)] t
-            where 
-                t = tensorProductWith sMultIvar eqn1_2Intertwiner ivar2Tensor 
-
-eqn1_2Comps :: (Fractional a) => [[Ivar a]]
-eqn1_2Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(6,0)]) t
-            where
-                t = evalFullTensor [(6,0),(5,0)] eqn1_2   
-
---now the third block of the first equation
-
-eqn1_3Intertwiner :: (Fractional a) => Tensor a
-eqn1_3Intertwiner = tensorAdd t1 t2
-            where 
-                t1 = tensorProduct interArea delta_I
-                t2 = tensorProduct interMetric delta_A 
-
---there is the problem                
-
-eqn1_3 :: (Fractional a) => Tensor (Ivar a)
-eqn1_3 = tensorContractWith [(0,1,addIvar,zeroIvar 315)] [(0,1,addIvar,zeroIvar 315)] [] t
-            where 
-                t = tensorProductWith sMultIvar eqn1_3Intertwiner ivar3Tensor 
-
-eqn1_3Comps :: (Fractional a) => [[Ivar a]]
-eqn1_3Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t
-            where
-                t = evalFullTensor [(6,0),(5,0)] eqn1_3   
-
---now the non derivative part of the equations
-
-eqn1_4CompsNonIvar :: (Fractional a) => [a]
-eqn1_4CompsNonIvar = map tensorFlatten $ evalFullTensor [(6,0),(5,0)] delta_a
-
-eqn1_4Comps :: (Fractional a) => [[Ivar a]]
-eqn1_4Comps = map (\x -> [sMultIvar x l]) eqn1_4CompsNonIvar
-                where l = mkIvar 1 (replicate 315 0) 315
-
---combine the equations (for the moment as a list)
-
-eqn1 :: (Fractional a) => [[Ivar a]]
-eqn1 = zipWith4 (\a b c d -> a ++ b ++ c ++ d) eqn1_1Comps eqn1_2Comps eqn1_3Comps eqn1_4Comps
-        
---it works but is super slow !!!
-
---now start with the second block of equations
-
---the first 21 entries are zero
-
-eqn2_1Comps :: (Fractional a) => [[Ivar a]]
-eqn2_1Comps = replicate 40 $ replicate 21 (zeroIvar 315)
-
-eqn2_2 :: (Fractional a) => Tensor (Ivar a)
-eqn2_2 = tensorContractWith_A (0,1,addIvar,zeroIvar 315) t3
-        where 
-            t1 = tensorProduct interArea sym2_a
-            t2 = tensorContract_a (0,2) t1
-            t3 = tensorProductWith sMultIvar t2 ivar1Tensor 
-
---now we need to take care of the symmetries when we evaluate the tensor
-
-eqn2_2Comps :: (Fractional a) => [[Ivar a]]
-eqn2_2Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(6,0)]) t2
-        where
-             t1 = map (\x -> evalTensor x eqn2_2) $ symEvalList2 (5,0,1)
-             t2 = concat $ map (evalFullTensor [(6,0)]) t1 
-
---now the next block
-
-eqn2_3Inter :: (Fractional a) => Tensor a
-eqn2_3Inter = tensorSub t4 r2  
-        where 
-            t1 = tensorProduct inter_J interArea 
-            t2 = tensorProduct t1 sym2_a
-            t3 = tensorContract [] [] [(1,1),(2,2)] t2
-            t4 = tensorSMult 2 t3
-            r1 = tensorProduct inter_J delta_A
-            r2 = tensorProduct delta_a r1
-
-eqn2_3 :: (Fractional a) => Tensor (Ivar a)
-eqn2_3 = tensorContractWith [(0,1,addIvar, zeroIvar 315)] [] [(0,0,addIvar,zeroIvar 315)] t
-        where 
-            t = tensorProductWith sMultIvar eqn2_3Inter ivar2Tensor
-
-eqn2_3Comps :: (Fractional a) => [[Ivar a]]
-eqn2_3Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t2
-        where
-             t1 = map (\x -> evalTensor x eqn2_3) $ symEvalList2 (5,0,1)
-             t2 = concat $ map (evalFullTensor [(6,0)]) t1 
-
---again the last equation is zero
-
-eqn2_4Comps :: (Fractional a) => [[Ivar a]]
-eqn2_4Comps = replicate 40 $ replicate 210 $ zeroIvar 315
-
---combine the blocks to one equations
-
-eqn2 :: (Fractional a) => [[Ivar a]]
-eqn2 = zipWith4 (\a b c d -> a ++ b ++ c ++ d) eqn2_1Comps eqn2_2Comps eqn2_3Comps eqn2_4Comps
-
---now the last block
-
-eqn3_1Comps :: (Fractional a) => [[Ivar a]]
-eqn3_1Comps = replicate 80 $ replicate 21 $ zeroIvar 315
-
-eqn3_2Comps :: (Fractional a) => [[Ivar a]]
-eqn3_2Comps = replicate 80 $ replicate 84 $ zeroIvar 315
-
-eqn3_3Inter :: (Fractional a) => Tensor a  
-eqn3_3Inter = tensorContract [] [] [(0,1),(1,2),(2,3)] t2
-        where 
-            t1 = tensorProduct inter_J interArea
-            t2 = tensorProduct t1 sym3_a
-
-eqn3_3 :: (Fractional a) => Tensor (Ivar a)
-eqn3_3 = tensorContractWith_A (0,1,addIvar,zeroIvar 315) t
-        where 
-            t = tensorProductWith sMultIvar eqn3_3Inter ivar1Tensor
-
-eqn3_3Comps :: (Fractional a) => [[Ivar a]]
-eqn3_3Comps = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t2
-        where 
-            t1 = map (\x -> evalTensor x eqn3_3) $ symEvalList3 (5,0,1,2)
-            t2 = concat $ map (evalFullTensor [(6,0)]) t1 
-
-eqn3_4Comps :: (Fractional a) => [[Ivar a]]
-eqn3_4Comps = replicate 80 $ replicate 210 $ zeroIvar 315
-
---combine the equations
-
-eqn3 :: (Fractional a) => [[Ivar a]]
-eqn3 = zipWith4 (\a b c d -> a ++ b ++ c ++ d) eqn3_1Comps eqn3_2Comps eqn3_3Comps eqn3_4Comps
-
---and combine all equations
-
-alleqns :: (Fractional a) => [[Ivar a]]
-alleqns = eqn1 ++ eqn2 ++ eqn3 
-
-
-
-
-
-
-
-
-
-
-
-
 
 main = do
-    writeFile "DiffeoEqnsHaskell1.txt" $ show alleqns
+    let delta_aMap = mkTensorMap delta_a
+    let delta_IMap = mkTensorMap delta_I
+    let delta_AMap = mkTensorMap delta_A
+
+    let inter_IMap = mkTensorMap inter_I
+    let inter_JMap = mkTensorMap inter_J
+    let interMetricMap = mkTensorMap interMetric
+    let interAreaMap = mkTensorMap interArea
+
+    let sym2_aMap = mkTensorMap sym2_a
+    let sym3_aMap = mkTensorMap sym3_a
+
+    let ivar1TensorMap = mkTensorMap ivar1Tensor
+    let ivar2TensorMap = mkTensorMap ivar2Tensor
+    let ivar3TensorMap = mkTensorMap ivar3Tensor
+
+    --now define the corresponding Tensors (where function evaluation is archieved by reading out from the maps)
+
+    let delta_aTens = Tensor (0,0,0,0,1,1) (\x -> fromJust $ Map.lookup x delta_aMap)
+    let delta_ITens = Tensor (0,0,1,1,0,0) (\x -> fromJust $ Map.lookup x delta_IMap)
+    let delta_ATens = Tensor (1,1,0,0,0,0) (\x -> fromJust $ Map.lookup x delta_AMap)
+
+    let inter_ITens = Tensor (0,0,1,0,0,2) (\x -> fromJust $ Map.lookup x inter_IMap)
+    let inter_JTens = Tensor (0,0,0,1,2,0) (\x -> fromJust $ Map.lookup x inter_JMap)
+    let interMetricTens = Tensor (0,0,1,1,1,1) (\x -> fromJust $ Map.lookup x interMetricMap)
+    let interAreaTens = Tensor (1,1,0,0,1,1) (\x -> fromJust $ Map.lookup x interAreaMap)
+
+    let sym2_aTens = Tensor (0,0,0,0,2,2) (\x -> fromJust $ Map.lookup x sym2_aMap)
+    let sym3_aTens = Tensor (0,0,0,0,3,3) (\x -> fromJust $ Map.lookup x sym3_aMap)
+
+    let ivar1TensorTens = Tensor (0,1,0,0,0,0) (\x -> fromJust $ Map.lookup x ivar1TensorMap)
+    let ivar2TensorTens = Tensor (0,1,0,0,0,1) (\x -> fromJust $ Map.lookup x ivar2TensorMap)
+    let ivar3TensorTens = Tensor (0,1,0,1,0,0) (\x -> fromJust $ Map.lookup x ivar3TensorMap)
+
+    --now we have all tensors
+
+    let test = eqn1_3Comps delta_ITens delta_ATens interMetricTens interAreaTens ivar3TensorTens
+
+    writeFile "DiffeoEqnsHaskell1.txt" $ show test 
+
+
+
+
+
+
+
+
+
