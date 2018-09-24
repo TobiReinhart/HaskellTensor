@@ -2,8 +2,9 @@
 
 module Pde (
     MultiIndex, diffOrder, diffOrderMult, lengthMult, mkMultiIndex, multIndgetList, cartProdList, mkAllMultiIndsList, mkAllMultiInds,
-    mkAllMultiIndsUpto, addLists, addMultiInds, getValue, Pde, isRightMultInd, removeZeros, mkPde, prolongPdeConstCoeff, combinePdes,
-    combinePdesWith, multIndNumberMap, multIndex1toNumber, numbertoMultIndex1, isDerivable1, deriveIvar, prolongPdeIvar
+    mkAllMultiIndsUpto, mkAllMultiIndsUptoRev, addLists, addMultiInds, getValue, Pde, isRightMultInd, removeZeros, mkPde, prolongPdeConstCoeff, combinePdes,
+    combinePdesWith, multIndNumberMap, multIndex1toNumber, numbertoMultIndex1, multIndex2toNumber, multIndex2NumberMaple,  isDerivable1, deriveIvar, prolongPdeIvar,
+    printtoMaple, printSystoMaple
     ) where
 
     import Data.List
@@ -21,7 +22,12 @@ module Pde (
 
     --construct a multiindex from length ord and a list
 
-    data MultiIndex = UnsafeMultInd Int Natural [Natural] deriving (Show,Ord,Eq)
+    data MultiIndex = UnsafeMultInd Int Natural [Natural] deriving (Ord,Eq)
+
+    instance Show MultiIndex where
+        show (UnsafeMultInd i n l)
+                | n == 0 = "const"
+                | otherwise = show l
 
     --write a safe constructor
 
@@ -73,6 +79,12 @@ module Pde (
             | n == 0 = mkAllMultiInds i n
             | otherwise = (mkAllMultiIndsUpto i (n-1)) ++ (mkAllMultiInds i n)
 
+    mkAllMultiIndsUptoRev :: Int -> Natural -> [MultiIndex]
+    mkAllMultiIndsUptoRev i n
+            | n == 0 = mkAllMultiInds i n
+            | otherwise =  (mkAllMultiInds i n) ++ (mkAllMultiIndsUptoRev i (n-1))
+    
+
     --we need to be able to prolong multiindices
 
     addLists :: (Num a) => [a] -> [a] -> [a]
@@ -93,10 +105,28 @@ module Pde (
     --it is only important how many dvars and ivars exist
 
     --Pde nops dVar nops Ivar Ord Map (MultiInd, #dvar) value
+
+    --we need to be able to show this
     
     data Pde a = Pde Int Int Natural (Map.Map (MultiIndex, Int) a)
 
+    --there is probably the error (keys are also ord 2)
+
+    showKey :: (MultiIndex, Int) -> String
+    showKey (i,j) 
+                | diffOrderMult i == 0 = "L"++(show j)
+                | diffOrderMult i == 1 = "L" ++ (show j) ++ ","  ++ (show (multIndex1toNumber i))
+                | diffOrderMult i == 2 = "L" ++ (show j) ++ ","  ++ (show (multIndex2toNumber i))
+                | otherwise = error "wotks only up to difforder 2"
+
+    instance (Show a) => Show (Pde a) where
+        show (Pde i j n pdemap) = show $ map (\x -> "(" ++ (show (snd x)) ++ ")" ++ "*" ++ (showKey (fst x))) l  
+                        where l = Map.assocs pdemap
+
     --extract the value of a given pde
+
+    --this function is probanly slow
+
 
     getPdeValue :: Pde a -> (MultiIndex,Int) -> Maybe a
     getPdeValue (Pde dvar ivar ord  map) (ind,var) 
@@ -118,17 +148,21 @@ module Pde (
             | lengthMult ind /= ivar = error "MultiIndex has wrong length compared to number of ivars"
             | otherwise = (ind,var)
 
-    removeZeros :: (Num b,Eq b) => [(a,b)] -> [(a,b)]
-    removeZeros l = filter (\x -> ((snd x) /= 0 && (snd x) /= (-0))) l
+    removeZeros :: (Eq b) => b -> [(a,b)] -> [(a,b)]
+    removeZeros zeroB l = filter (\x -> ((snd x) /= zeroB)) l
+
+    --must remove the ivar zeros
 
     --now the safe constructor for Pdes from lists [((MultiIndex,Int),a)]
 
-    mkPde :: (Num a, Eq a) => Int -> Int -> Natural -> [((MultiIndex,Int),a)] -> Pde a
-    mkPde dvar ivar ord list = Pde dvar ivar ord (Map.fromList inds)
-            where list2 = removeZeros list
+    mkPde :: (Eq a) => a -> Int -> Int -> Natural -> [((MultiIndex,Int),a)] -> Pde a
+    mkPde zeroA dvar ivar ord list = Pde dvar ivar ord (Map.fromList inds)
+            where list2 = removeZeros zeroA list
                   inds  = map (\x -> (isRightMultInd dvar ivar ord (fst x), snd x)) list2
 
-    --right now this works only for pdes with constant coefficients
+    --removeZeros must remove ivar zeros (i.e. this function removes all values that are equal to zeroA)
+
+    --right now this (the following) works only for pdes with constant coefficients
 
     --this is not the case for the diffeo equivariance equations as here there are coefficints that are ivars
 
@@ -159,11 +193,32 @@ module Pde (
     multIndNumberMap i n = Map.fromList $ zip l [1..length l]
             where l = mkAllMultiIndsUpto i n 
 
+    --this function should probably be realized as a Map!!!!
+
     multIndex1toNumber :: MultiIndex -> Int
     multIndex1toNumber (UnsafeMultInd i ord l)
-            |  ord /= 1 = error "only valid for diffOrder 1"
+            |  ord /= 1 = error ("only valid for diffOrder 1, called with" ++ " " ++ (show ord ))
             | otherwise = i - (length zeros)
              where zeros = takeWhile (\x -> x == 0) l 
+
+    multIndex2toNumber :: MultiIndex -> (Int,Int)
+    multIndex2toNumber (UnsafeMultInd i ord l)
+            |  ord /= 2 = error ("only valid for diffOrder 2, called with" ++ " " ++ (show ord ))
+            | otherwise = (i-lz2,i - lz)
+             where 
+                zeros1 = takeWhile (\x -> x == 0) l
+                lz = length zeros1 
+                newlist = ((l !! lz) -1) : (drop (lz+1) l) 
+                lz2 = length $ takeWhile (\x -> x==0) newlist
+
+    multIndex2NumberMaple :: MultiIndex -> Int
+    multIndex2NumberMaple (UnsafeMultInd i ord l) 
+                | ord == 0 = 50086
+                | ord == 1 = 49770 + (multIndex1toNumber (UnsafeMultInd i ord l))
+                | ord == 2 = ((fst p)-1)*315 + (snd p) 
+                | otherwise = error "works only for multiinds up to order 2"
+                 where p = multIndex2toNumber (UnsafeMultInd i ord l)
+
 
     numbertoMultIndex1 :: Int -> Int -> MultiIndex
     numbertoMultIndex1 i j = mkMultiIndex i 1 l
@@ -176,12 +231,12 @@ module Pde (
 
 --we need derivative functions for the ivars
 
-    --check if the derivative yields zero (otherwise it is just given by subtraction of inds)
+--check if the derivative yields zero (otherwise it is just given by subtraction of inds)
 
     isDerivable1 :: (Num a, Eq a, Ord a) => MultiIndex -> Ivar a -> Bool
     isDerivable1 mult var
             | i /= j = error "derivative mult ind must be length as ivar vec"
-            | l !! (multIndex1toNumber mult) /= 0 = True
+            | l !! (j - (multIndex1toNumber mult)) /= 0 = True
             | otherwise = False
               where 
                 num = getIvarScalar var
@@ -199,7 +254,7 @@ module Pde (
                  l = getIvarVec ivar
                  j = getIvarLength ivar 
                  i = lengthMult mult
-                 entry = l !! (multIndex1toNumber mult)
+                 entry = (l !! (j-(multIndex1toNumber mult)))
 
     --the function a -> a is the derivative function for the elements
 
@@ -211,5 +266,21 @@ module Pde (
             pde2 = Pde i j n map2
 
 
-   --the only part that is still unclear is how to convert the result of the tensor evaluation to a pde ??
+    --the only part that is still unclear is how to convert the result of the tensor evaluation to a pde ??
+
+    --there is still some error in prolongPdeIvar (at some point a multiindex of rank 2 is constructed)
+
+    --this wotks only for the pdes with only 1 dvar!! and only for 1 pde
+
+    --store the matrixrow (i.e. the eqn number) as argument in print to maple
+
+    printtoMaple :: (Num a, Ord a, Show a) => (Pde (Ivar a),Int) -> String
+    printtoMaple ((Pde i j n mapPde),eqnNr) = ( foldl (++) " " $ map (\x -> (show $ (eqnNr,multIndex2NumberMaple (fst (fst x)))) ++ "=" ++  (show $ snd x) ++ "," ) list) 
+                where 
+                        list = Map.assocs mapPde
+
+    printSystoMaple :: (Num a, Ord a, Show a) => [Pde (Ivar a)] -> String
+    printSystoMaple  sys = "{" ++ (foldl (\a b -> a ++ (printtoMaple b)) " " l) ++ "}" 
+                        where l = zip sys [1..]
+
   

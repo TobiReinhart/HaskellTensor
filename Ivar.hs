@@ -9,7 +9,7 @@
 
 
 module Ivar (
-Ivar, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, addIvar, sMultIvar, subIvar, mkAllIvarsList,
+Ivar, ivarCharList, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, addIvar, sMultIvar, subIvar, mkAllIvarsList,
 mkAllIvars, number2Ivar, ivar2Number 
     ) where
     
@@ -31,11 +31,20 @@ mkAllIvars, number2Ivar, ivar2Number
     instance (Show a, Num a, Eq a) => Show (Ivar a) where
         show (Ivar num l i) 
             | inum == 0 = (show num)
-            | otherwise = (show num) ++ "*" ++ "V" ++ ( show (inum) )
+            | otherwise = foldl (\x y ->  x ++ "+" ++ y) (show num) $ showIvarVec (Ivar num l i)
              where 
                 inum = ivar2Number (Ivar num l i)
-            
-   --V0 is not displayed as it is the case where there is no variable            
+
+    ivarCharList :: Int -> [String]
+    ivarCharList i = zipWith (\x y -> x ++ (show y)) l [1..i]
+                where 
+                        l = repeat "V"
+
+    showIvarVec :: (Show a,Eq a, Num a) => Ivar a -> [String]
+    showIvarVec (Ivar num l i) = map (\x -> "(" ++ (show (fst x)) ++ ")" ++ "*" ++ (snd x)) zipl 
+                where 
+                        varl = ivarCharList i
+                        zipl = filter (\x -> (fst x) /= 0 ) $ zip l varl 
 
           
             
@@ -97,6 +106,8 @@ mkAllIvars, number2Ivar, ivar2Number
     number2Ivar i = mkIvar 1 l 315
                 where 
                     l = (replicate (315-(i+1)) 0) ++ ( 1 : (replicate ((i+1)-1) 0))
+
+    --ivar2Number works only for ivars with only 1 slot filled !!!                
 
     ivar2Number :: (Eq a, Num a) => Ivar a -> Int
     ivar2Number (Ivar num l i) = i - (length zeros)

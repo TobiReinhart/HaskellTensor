@@ -72,8 +72,40 @@ main = do
 
     let equation = e1++e2++e3
 
+    --now start constructing the pde
 
-    writeFile "DiffeoEqnsHaskell2.txt"  $ show equation
+    let multIndList = mkAllMultiIndsUptoRev 315 1
+    let lDiffList = zip multIndList $ repeat 1
+
+    --trasform the pde list into the correct form
+
+    --the biggest problem is to check if we evaluated ivars tensor inds and multinds the same way
+
+    let pdeList = map (\x -> zip lDiffList x) equation
+
+    --now construct the pde
+
+    let pdeSys = map (mkPde (zeroIvar 315) 1 315 1) pdeList 
+
+    --now prolong the system
+
+    let eqnDerProd = [ (a,b) | a <- (mkAllMultiInds 315 1), b <- pdeSys ]
+
+    --this is the full prolongation
+
+    let prolongSys = (map (\x -> (prolongPdeIvar (fst x) (snd x))) eqnDerProd) ++ pdeSys
+
+    --in the symbol only the highest derivatives are stored
+
+    let prolongSymbol = (map (\x -> (prolongPdeConstCoeff (fst x) (snd x))) eqnDerProd)
+
+
+    --the only thing missing right now is removing duplicated computations (e.g. multind1tonumber via maps !!!)
+
+    writeFile "HaskellPdeSymbolProlonged.txt" $ printSystoMaple prolongSymbol
+
+
+
 
     --it seems to work
 
