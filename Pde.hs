@@ -4,7 +4,7 @@ module Pde (
     MultiIndex, diffOrder, diffOrderMult, lengthMult, mkMultiIndex, multIndgetList, cartProdList, mkAllMultiIndsList, mkAllMultiInds,
     mkAllMultiIndsUpto, mkAllMultiIndsUptoRev, addLists, addMultiInds, getValue, Pde, isRightMultInd, removeZeros, mkPde, prolongPdeConstCoeff, combinePdes,
     combinePdesWith, multIndNumberMap, multIndex1toNumber, numbertoMultIndex1, multIndex2toNumber, multIndex2NumberMaple,  isDerivable1, deriveIvar, prolongPdeIvar,
-    prolongPdeAll, prolongSystem, printtoMaple, printtoMaple2, printSystoMaple, printSystoMaple2, readPdeTxt, readPde, splitPdeTxt, splitPde, splitPdeSysTxt, splitPdeSys, readPdeSys
+    prolongPdeAll, prolongSystem, printtoMaple, printSystoMaple, readPdeTxt, readPde, splitPdeTxt, splitPde, splitPdeSysTxt, splitPdeSys, readPdeSys
     ) where
 
     import Data.List
@@ -285,25 +285,23 @@ module Pde (
 
     --store the matrixrow (i.e. the eqn number) as argument in print to maple
 
-    printtoMaple :: (Num a, Ord a, Show a) => (Pde (Ivar a), Int) -> [((Int,Int),Ivar a)]
-    printtoMaple ((Pde i j n mapPde),int) = Map.assocs newMap
+    printtoMaple :: (Num a, Ord a, Show a) => (Pde (Ivar a), Int) -> String
+    printtoMaple ((Pde i j n mapPde),int) = concat aList2 
                         where 
-                                newMap = Map.mapKeys (\x -> (int,multIndex2NumberMaple (fst x) )) mapPde
+                                aList = Map.assocs mapPde
+                                aList2 = map (\x -> ',' : (show (int,multIndex2NumberMaple (fst $ fst x))  ++ '=' : (show (snd x) ))) aList
 
-    printtoMaple2 :: (Num a, Ord a, Show a) => (Pde (Ivar a),Int) -> String
-    printtoMaple2 ((Pde i j n mapPde),eqnNr) = ( foldl (++) " " $ map (\x -> (show $ (eqnNr,multIndex2NumberMaple (fst (fst x)))) ++ "=" ++  (show $ snd x) ++ "," ) list) 
-                where 
-                        list = Map.assocs mapPde
 
-    printSystoMaple2 :: (Num a, Ord a, Show a) => [Pde (Ivar a)] -> String
-    printSystoMaple2  sys = "{" ++ (foldl (\a b -> a ++ (printtoMaple2 b)) " " l) ++ "}" 
-                        where l = zip sys [1..]
 
-    printSystoMaple :: (Num a, Ord a, Show a) => [Pde (Ivar a)] -> [((Int,Int),Ivar a)]
-    printSystoMaple sys = foldl (++) [] l
+
+
+
+    printSystoMaple :: (Num a, Ord a, Show a) => [Pde (Ivar a)] -> String
+    printSystoMaple sys = '{' : (tail $ concat l) ++ "}"
                         where 
                                 z = zip sys [1..]
                                 l = map printtoMaple z
+                                 
 
     --this function is the problem !!!!! -> (the 2er versions are the older ones)
 
