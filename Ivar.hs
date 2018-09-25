@@ -10,7 +10,7 @@
 
 module Ivar (
 Ivar, ivarCharList, getIvarScalar, getIvarVec, getIvarLength, mkIvar, zeroIvar, addListComps, addIvar, sMultIvar, subIvar, mkAllIvarsList,
-mkAllIvars, number2Ivar, ivar2Number 
+mkAllIvars, number2Ivar, ivar2Number, splitIvarExpr, safeTail, reconstrIvar, stringtoIvar, readIvar
     ) where
     
     import Data.List
@@ -61,7 +61,7 @@ mkAllIvars, number2Ivar, ivar2Number
     
     mkIvar :: (Num a) => a -> [a] -> Int -> Ivar a
     mkIvar num vec i 
-            | length vec /= i = error "entry list does not fir the specified length"
+            | length vec /= i = error ("entry list does not fit the specified length " ++ "length : " ++ (show $ length vec) ++ "specified : " ++ (show i) ) 
             | otherwise = Ivar num vec i
 
     zeroIvar :: (Num a) => Int -> Ivar a
@@ -100,16 +100,51 @@ mkAllIvars, number2Ivar, ivar2Number
     mkAllIvars i =  map (\x -> mkIvar 0 x i) (mkAllIvarsList i) 
     
 
-    --indexing starts at 0 (careful where this might cause additional problems)
+    --indexing starts at 0 (careful where this might cause additional problems) -> now at 1 !!!
+
+    --only for ivars with no constant stored (now Ivars start at (1,0,0,...))
 
     number2Ivar :: (Num a) => Int -> Ivar a
-    number2Ivar i = mkIvar 1 l 315
+    number2Ivar i = mkIvar 0 l 315
                 where 
-                    l = (replicate (315-(i+1)) 0) ++ ( 1 : (replicate ((i+1)-1) 0))
+                    l = (replicate (i-1) 0) ++ ( 1 : (replicate (315-i) 0))
 
     --ivar2Number works only for ivars with only 1 slot filled !!!                
 
     ivar2Number :: (Eq a, Num a) => Ivar a -> Int
-    ivar2Number (Ivar num l i) = i - (length zeros)
+    ivar2Number (Ivar num l i) = (length zeros) +1
                  where zeros = takeWhile (\x -> x == 0) l 
 
+    --ivars are displayed as Vi
+
+    --we need a fucntion to convert them back into the standard ivar form
+
+    splitIvarExpr :: String -> [String]
+    splitIvarExpr [] = []
+    splitIvarExpr s = s1 : splitIvarExpr s2
+                        where
+                                s1 = takeWhile (/= '+') s
+                                s2 = safeTail $  dropWhile (/= '+') s
+
+    safeTail :: [a] -> [a]
+    safeTail [] = []
+    safeTail (x:xs) = xs 
+
+    --for the moment specific for the area metric
+
+    reconstrIvar :: [String] -> Ivar Double
+    reconstrIvar [a] = mkIvar (read a) (replicate 315 0) 315
+    reconstrIvar s = foldr addIvar (zeroIvar 315) var
+                        where 
+                                var = reconstrIvar ([head s]) : (map stringtoIvar (tail s))
+
+    --careful number2Ivar must be applied to the full number behind V
+
+    stringtoIvar ::  String -> Ivar Double
+    stringtoIvar s = sMultIvar (read (drop 1 (init l)) ) (number2Ivar (read  num))
+                        where
+                                l = takeWhile (/= '*') s
+                                num = tail $ dropWhile (/= 'V') s 
+
+    readIvar :: String -> Ivar Double
+    readIvar = reconstrIvar.splitIvarExpr

@@ -4,7 +4,7 @@ module Pde (
     MultiIndex, diffOrder, diffOrderMult, lengthMult, mkMultiIndex, multIndgetList, cartProdList, mkAllMultiIndsList, mkAllMultiInds,
     mkAllMultiIndsUpto, mkAllMultiIndsUptoRev, addLists, addMultiInds, getValue, Pde, isRightMultInd, removeZeros, mkPde, prolongPdeConstCoeff, combinePdes,
     combinePdesWith, multIndNumberMap, multIndex1toNumber, numbertoMultIndex1, multIndex2toNumber, multIndex2NumberMaple,  isDerivable1, deriveIvar, prolongPdeIvar,
-    printtoMaple, printSystoMaple
+    printtoMaple, printSystoMaple, readPdeTxt, readPde, splitPdeTxt, splitPde, splitPdeSysTxt, splitPdeSys, readPdeSys
     ) where
 
     import Data.List
@@ -204,7 +204,7 @@ module Pde (
     multIndex2toNumber :: MultiIndex -> (Int,Int)
     multIndex2toNumber (UnsafeMultInd i ord l)
             |  ord /= 2 = error ("only valid for diffOrder 2, called with" ++ " " ++ (show ord ))
-            | otherwise = (i-lz2,i - lz)
+            | otherwise = (i-(lz+lz2),i - lz)
              where 
                 zeros1 = takeWhile (\x -> x == 0) l
                 lz = length zeros1 
@@ -282,5 +282,38 @@ module Pde (
     printSystoMaple :: (Num a, Ord a, Show a) => [Pde (Ivar a)] -> String
     printSystoMaple  sys = "{" ++ (foldl (\a b -> a ++ (printtoMaple b)) " " l) ++ "}" 
                         where l = zip sys [1..]
+
+
+    --this function reads a pde in list format (explicit list of equations) from text to a pde
+
+    readPdeTxt :: [String] -> [(Ivar Double)]
+    readPdeTxt s = map readIvar s
+
+    splitPdeTxt :: String -> [String]
+    splitPdeTxt [] = []
+    splitPdeTxt s = s1 : splitPdeTxt s2
+                        where
+                                s1 = takeWhile (/= ',') s
+                                s2 = safeTail $  dropWhile (/= ',') s
+
+    splitPde :: String -> [String]
+    splitPde = splitPdeTxt.init.tail 
+
+    readPde :: String -> [(Ivar Double)]
+    readPde = readPdeTxt.splitPde
+
+    splitPdeSysTxt :: String -> [String]
+    splitPdeSysTxt [] = []
+    splitPdeSysTxt s = ('[' : s1 ++ [']']) : ( splitPdeSysTxt s2)
+                        where
+                                s1 = takeWhile (/= ']') $ tail s
+                                s2 = dropWhile (/= '[') $ tail s 
+
+    splitPdeSys :: String -> [String]
+    splitPdeSys = splitPdeSysTxt.init.tail
+
+
+    readPdeSys :: String -> [[(Ivar Double)]]
+    readPdeSys s = map readPde (splitPdeSys s)
 
   

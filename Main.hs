@@ -102,12 +102,15 @@ main = do
 
     --the only thing missing right now is removing duplicated computations (e.g. multind1tonumber via maps !!!)
 
-    writeFile "HaskellPdeSymbolProlonged.txt" $ printSystoMaple prolongSymbol
+    savedSys <-  readFile "HaskellPdeSys.txt"
 
+    let sysTest = readPdeSys savedSys
 
-
+    putStrLn $ show (sysTest !! 0)
 
     --it seems to work
+
+    --too slow 
 
 
 
