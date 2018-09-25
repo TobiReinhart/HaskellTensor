@@ -273,17 +273,17 @@ module BasicTensors (
     --now we can construct the 3 functions
     
     ivarTensor1F :: (Num a) => Index -> Ivar a
-    ivarTensor1F  ([],[a],[],[],[],[]) =  number2Ivar (fromEnum a)  
+    ivarTensor1F  ([],[a],[],[],[],[]) =  number2Ivar (fromEnum a +1)  
     ivarTensor1F l = error "function ivarTensor1F is evaluated at wrong index"
 
     --we eval the geomatry index in the outer loop and the spacetime index in the inner loop
 
     ivarTensor2F :: (Num a) => Index -> Ivar a
-    ivarTensor2F ([],[a],[],[],[],[b]) = number2Ivar $ (fromEnum a)*4 + (fromEnum b) + 21
+    ivarTensor2F ([],[a],[],[],[],[b]) = number2Ivar $ (fromEnum a)*4 + (fromEnum b+1) + 21
     ivarTensor2F j = error "function ivarTensor2F evaluated at wrong index"
 
     ivarTensor3F :: (Num a) => Index -> Ivar a
-    ivarTensor3F ([],[a],[],[b],[],[]) = number2Ivar $ (fromEnum a)*10 + (fromEnum b) + 105
+    ivarTensor3F ([],[a],[],[b],[],[]) = number2Ivar $ (fromEnum a)*10 + (fromEnum b+1) + 105
     ivarTensor3F j = error "function ivarTensor3F evaluated at wrong index"
 
     --now defien the Tensors

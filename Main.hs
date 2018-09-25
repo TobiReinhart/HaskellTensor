@@ -102,11 +102,17 @@ main = do
 
     --the only thing missing right now is removing duplicated computations (e.g. multind1tonumber via maps !!!)
 
-    savedSys <-  readFile "HaskellPdeSys.txt"
+    sysread <- readFile "HaskellPdeSys.txt"
 
-    let sysTest = readPdeSys savedSys
+    let pdeSysSaved = readPdeSys sysread
 
-    putStrLn $ show (sysTest !! 0)
+    let pdeSysList = map (\x -> zip lDiffList x) pdeSysSaved
+
+    let pdeSys2 = map (mkPde (zeroIvar 315) 1 315 1) pdeSysList
+  
+    let test = prolongSystem (take 10 $ mkAllMultiInds 315 1) pdeSys2
+    
+    putStrLn $ show $ printSystoMaple test
 
     --it seems to work
 
