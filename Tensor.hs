@@ -128,7 +128,20 @@ evalRangeTensor1, evalRangeTensor
     blockSymmetrizeTensor :: (Fractional a) => Int -> ([Int],[Int]) -> Tensor a -> Tensor a
     blockSymmetrizeTensor n k t = tensorSMult (1/2) (tensorAdd t (tensorBlockTranspose n k t))
 
-    --now cyclic symmetrization
+    --now cyclic symmetrization (there might be a problem??)
+
+    --for the moment we only symmetrize the first (i )indices of one kind (tensors can always be transposed until the first indices are to be symmetrized)
+
+    factorial :: (Num a, Eq a) => a -> a 
+    factorial 0 = 1
+    factorial n = n * factorial (n-1)
+    
+    cyclicSymmetrizeTensor :: (Fractional a) => Int -> Int -> Tensor a -> Tensor a
+    cyclicSymmetrizeTensor pos i (Tensor rank f) = Tensor rank g
+                where 
+                        g = \x -> ( foldl (+) 0 (map f (cyclicSymInd pos i x))   ) / (fromIntegral (factorial i))
+
+    --this function is actually no longer needed                    
 
     ordSubLists2 :: [a] -> [(a,a)]
     ordSubLists2 x 
@@ -138,19 +151,15 @@ evalRangeTensor1, evalRangeTensor
           where lengthX = length x
                 tailX = tail x
 
-    cyclicSymmetrizeTensor :: (Fractional a) => Int -> [Int] -> Tensor a -> Tensor a
-    cyclicSymmetrizeTensor  n k t = foldr  (symmetrizeTensor n) t list2
-                where list2 = ordSubLists2 k 
+   --combine the symmetrizer functions in the form syms, asyms ,blocksyms, cyclcicsyms (careful with this function!)
 
-   --combine the symmetrizer functions in the form syms, asyms ,blocksyms, cyclcicsyms
-
-    symTensor :: (Fractional a) => Int -> [(Int,Int)] -> [(Int,Int)] -> [([Int],[Int])] -> [[Int]] -> Tensor a -> Tensor a
+    symTensor :: (Fractional a) => Int -> [(Int,Int)] -> [(Int,Int)] -> [([Int],[Int])] -> Int -> Tensor a -> Tensor a
     symTensor n syms asyms bsyms csyms t = (tensorCSym.tensorBSym.tensorASym.tensorSym) t 
                 where 
                         tensorSym = \x1 -> foldr (symmetrizeTensor n) x1 syms
                         tensorASym = \x2 -> foldr (aSymmetrizeTensor n) x2 asyms
                         tensorBSym = \x3 -> foldr (blockSymmetrizeTensor n) x3 bsyms
-                        tensorCSym = \x4 -> foldr (cyclicSymmetrizeTensor n) x4 csyms
+                        tensorCSym = cyclicSymmetrizeTensor n csyms
 
 
     --the next step is writing a tensor product function

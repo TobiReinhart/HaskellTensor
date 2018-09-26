@@ -303,7 +303,7 @@ module BasicTensors (
     sym2_a = symmetrizeTensor 5 (0,1) $ tensorProduct delta_a delta_a
 
     sym3_a :: Tensor Double
-    sym3_a = cyclicSymmetrizeTensor 5 [0,1,2] $ tensorProduct delta_a $ tensorProduct delta_a delta_a 
+    sym3_a = cyclicSymmetrizeTensor 5 3 $ tensorProduct delta_a $ tensorProduct delta_a delta_a 
 
     --the next functions are intended for building the equations (before stored in Main)
 

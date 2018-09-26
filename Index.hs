@@ -8,7 +8,7 @@ fromList2U_a, fromList2L_a, fromList2U_I, fromList2L_I, fromList2U_A, fromList2L
 toListfromU_a, toListfromL_a, toListfromU_I, toListfromL_I, toListfromU_A, toListfromL_A,
 indexList, swoop, swoopBlocks, interchangeInds, interchangeBlockInds, removeElem, insertElem, replaceElem, 
 contractionInd, contractionList_A, contractionList_I, contractionList_a, contractionIndex_A, contractionIndex_I,
-contractionIndex_a, insertIndex
+contractionIndex_a, insertIndex, cyclicSymList, cyclicSymInd
 ) where 
 
 
@@ -241,3 +241,25 @@ insertIndex i j k (a,b,c,d,e,f)
                 | i == 4 = (a,b,c,insertElem j (toEnum k :: Lind_I) d,e,f)
                 | i == 5 = (a,b,c,d,insertElem j (toEnum k :: Uind_a) e,f)
                 | i == 6 = (a,b,c,d,e,insertElem j (toEnum k :: Lind_a) f)
+
+--this function "symmetrizes" the first i elements of the list
+
+--if i is too large the full list is symmetrized
+
+cyclicSymList :: Int -> [a] -> [[a]]
+cyclicSymList i l = map (\x -> x ++ rest) l3 
+                where 
+                        l2 = take i l
+                        l3 = permutations l2
+                        rest = drop i l
+
+
+cyclicSymInd :: Int -> Int -> Index -> [Index]
+cyclicSymInd pos i  (a, b, c, d, e, f) 
+                | pos == 1 = map (\x -> (x,b,c,d,e,f)) (cyclicSymList i a)
+                | pos == 2 = map (\x -> (a,x,c,d,e,f)) (cyclicSymList i b)
+                | pos == 3 = map (\x -> (a,b,x,d,e,f)) (cyclicSymList i c)
+                | pos == 4 = map (\x -> (a,b,c,x,e,f)) (cyclicSymList i d)
+                | pos == 5 = map (\x -> (a,b,c,d,x,f)) (cyclicSymList i e)
+                | pos == 6 = map (\x -> (a,b,c,d,e,x)) (cyclicSymList i f)
+                | otherwise = error "wrong index postition"

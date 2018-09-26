@@ -66,9 +66,9 @@ main = do
 
     --combine the equaitons (for the moment as lists)
 
-    let e1 = zipWith4 (\a b c d -> a++b++c++d) e1_1  e1_2  e1_3  e1_4
-    let e2 = zipWith4 (\a b c d -> a++b++c++d) e2_1  e2_2  e2_3  e2_4
-    let e3 = zipWith4 (\a b c d -> a++b++c++d) e3_1  e3_2  e3_3  e3_4
+    let e1 = zipWith4 (\a b c d -> d++a++b++c) e1_1  e1_2  e1_3  e1_4
+    let e2 = zipWith4 (\a b c d -> d++a++b++c) e2_1  e2_2  e2_3  e2_4
+    let e3 = zipWith4 (\a b c d -> d++a++b++c) e3_1  e3_2  e3_3  e3_4
 
     let equation = e1++e2++e3
 
@@ -86,47 +86,12 @@ main = do
     --now construct the pde
 
     let pdeSys = map (mkPde (zeroIvar 315) 1 315 1) pdeList 
-
-    --now prolong the system
-
-    let eqnDerProd = [ (a,b) | a <- (mkAllMultiInds 315 1), b <- pdeSys ]
-
-    --this is the full prolongation
-
-    let prolongSys = (map (\x -> (prolongPdeIvar (fst x) (snd x))) eqnDerProd) ++ pdeSys
-
-    --in the symbol only the highest derivatives are stored
-
-    let prolongSymbol = (map (\x -> (prolongPdeConstCoeff (fst x) (snd x))) eqnDerProd)
-
-
-    --the only thing missing right now is removing duplicated computations (e.g. multind1tonumber via maps !!!)
-
-    {-
-    sysread <- readFile "HaskellPdeSys2.txt"
-
-    let pdeSysSaved = readPdeSys sysread
-
-    let pdeSysList = map (\x -> zip lDiffList x) pdeSysSaved
-
-    let pdeSys2 = map (mkPde (zeroIvar 315) 1 315 1) pdeSysList
   
-    let test = pdeSys2 ++ prolongSystem (mkAllMultiInds 315 1) pdeSys2
-    
-    writeFile "HaskellPdeSysProlonged.txt" $ printSystoMaple test 
-    -}
+    let pdeSysProlonged = pdeSys ++ prolongSystem (mkAllMultiInds 315 1) pdeSys
 
-    --it seems to work
+    writeFile "HaskellPdeSys3.txt" $ show equation
 
-    -- the last step is to check all ranges !!!!!!
-
-    --there is probably something still missing ?? (less entries in the matrix compared to the maple calculation)
-
-
-    --test the equations
-
-    writeFile "HaskellPdeSysNewSort2.txt" $ show equation
-
+    writeFile "HaskellPdeProlonged3.txt" $ printSystoMaple pdeSysProlonged
     
 
 
