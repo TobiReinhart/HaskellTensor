@@ -343,7 +343,7 @@ module BasicTensors (
                     t = tensorProductWith sMultIvar (eqn1_2Intertwiner intArea del_a del_A) ivar2 
 
     eqn1_2Comps :: Tensor Double -> Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
-    eqn1_2Comps intArea del_a del_A ivar2 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(6,0)]) t
+    eqn1_2Comps intArea del_a del_A ivar2 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(6,0),(2,0)]) t
                 where
                     t = evalFullTensor [(6,0),(5,0)] $ eqn1_2 intArea del_a del_A ivar2  
 
@@ -365,7 +365,7 @@ module BasicTensors (
                     t = tensorProductWith sMultIvar (eqn1_3Intertwiner del_I del_A intMetric intArea) ivar3 
 
     eqn1_3Comps :: Tensor Double -> Tensor Double -> Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
-    eqn1_3Comps del_I del_A intMetric intArea ivar3 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t
+    eqn1_3Comps del_I del_A intMetric intArea ivar3 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(4,0),(2,0)]) t
                 where
                     t = evalFullTensor [(6,0),(5,0)] $ eqn1_3 del_I del_A intMetric intArea ivar3
 
@@ -399,7 +399,7 @@ module BasicTensors (
     --now we need to take care of the symmetries when we evaluate the tensor
 
     eqn2_2Comps :: Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
-    eqn2_2Comps intArea sym2 ivar1 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(6,0)]) t2
+    eqn2_2Comps intArea sym2 ivar1 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(6,0),(2,0)]) t2
             where
               t1 = map (\x -> evalTensor x tens) $ symEvalList2 (5,0,1)
               tens = eqn2_2 intArea sym2 ivar1
@@ -427,7 +427,7 @@ module BasicTensors (
                 t = tensorProductWith sMultIvar (eqn2_3Inter intArea int_J sym2 del_A del_a) ivar2Tensor
 
     eqn2_3Comps :: Tensor Double -> Tensor Double -> Tensor Double -> Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
-    eqn2_3Comps intArea int_J sym2 del_A del_a ivar2 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t2
+    eqn2_3Comps intArea int_J sym2 del_A del_a ivar2 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(4,0),(2,0)]) t2
           where
                t1 = map (\x -> evalTensor x tens) $ symEvalList2 (5,0,1)
                tens = eqn2_3 intArea int_J sym2 del_A del_a ivar2
@@ -463,7 +463,7 @@ module BasicTensors (
             t = tensorProductWith sMultIvar (eqn3_3Inter intArea int_J sym3) ivar1
 
     eqn3_3Comps :: Tensor Double -> Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> [[Ivar Double]]
-    eqn3_3Comps intArea int_J sym3 ivar1 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(2,0),(4,0)]) t2
+    eqn3_3Comps intArea int_J sym3 ivar1 = map (\x -> map tensorFlatten x) $ map (evalFullTensor [(4,0),(2,0)]) t2
          where 
             t1 = map (\x -> evalTensor x tens) $ symEvalList3 (5,0,1,2)
             tens = eqn3_3 intArea int_J sym3 ivar1

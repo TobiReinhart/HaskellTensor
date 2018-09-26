@@ -102,6 +102,7 @@ main = do
 
     --the only thing missing right now is removing duplicated computations (e.g. multind1tonumber via maps !!!)
 
+    {-
     sysread <- readFile "HaskellPdeSys2.txt"
 
     let pdeSysSaved = readPdeSys sysread
@@ -113,10 +114,20 @@ main = do
     let test = pdeSys2 ++ prolongSystem (mkAllMultiInds 315 1) pdeSys2
     
     writeFile "HaskellPdeSysProlonged.txt" $ printSystoMaple test 
+    -}
+
     --it seems to work
 
     -- the last step is to check all ranges !!!!!!
 
+    --there is probably something still missing ?? (less entries in the matrix compared to the maple calculation)
+
+
+    --test the equations
+
+    writeFile "HaskellPdeSysNewSort.txt" $ show equation
+
+    
 
 
 
