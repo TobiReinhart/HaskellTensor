@@ -99,8 +99,9 @@ evalRangeTensor1, evalRangeTensor
     tensorSub (Tensor rank1 f) (Tensor rank2 g) 
                     | rank1 == rank2 = Tensor rank1 h
                     | otherwise = error "cannot add tensors of different rank"
-                    where    h = \x -> (g  x) - (f x) 
+                    where    h = \x -> (f  x) - (g x) 
     
+    --there was an error
                     
     --next we define a function that transposes a tensor, i.e. swoops its indices
 
