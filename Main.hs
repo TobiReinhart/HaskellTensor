@@ -125,7 +125,7 @@ main = do
 
     --test the equations
 
-    writeFile "HaskellPdeSysNewSort.txt" $ show equation
+    writeFile "HaskellPdeSysNewSort2.txt" $ show equation
 
     
 

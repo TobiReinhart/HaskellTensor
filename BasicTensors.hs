@@ -422,7 +422,7 @@ module BasicTensors (
     --ivar2 = ivar2Tensor            
 
     eqn2_3 :: Tensor Double -> Tensor Double -> Tensor Double -> Tensor Double -> Tensor Double -> Tensor (Ivar Double) -> Tensor (Ivar Double)
-    eqn2_3 intArea int_J sym2 del_A del_a ivar2 = tensorContractWith [(0,1,addIvar, zeroIvar 315)] [] [(0,0,addIvar,zeroIvar 315)] t
+    eqn2_3 intArea int_J sym2 del_A del_a ivar2 = tensorContractWith [(0,1,addIvar, zeroIvar 315)] [] [(0,1,addIvar,zeroIvar 315)] t
          where 
                 t = tensorProductWith sMultIvar (eqn2_3Inter intArea int_J sym2 del_A del_a) ivar2Tensor
 
