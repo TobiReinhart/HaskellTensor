@@ -102,7 +102,7 @@ main = do
 
     -}
 
-    putStrLn $ show ( equation !! 62)
+    writeFile "HaskellPdeNewInter.txt" $ show equation
 
 
     

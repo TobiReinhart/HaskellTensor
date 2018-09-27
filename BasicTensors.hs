@@ -416,8 +416,10 @@ module BasicTensors (
               t2 = tensorProduct t1 sym2
               t3 = tensorContract [] [] [(1,1),(2,2)] t2
               t4 = tensorSMult 2 t3
-              r1 = tensorProduct int_J del_A
-              r2 = tensorProduct del_a r1
+              jNew = tensorProduct int_J sym2
+              jNew2 = tensorContract [] [] [(0,0),(1,1)] jNew
+              r1 = tensorProduct jNew2 del_A
+              r2 = tensorProduct del_a r1 
 
     --ivar2 = ivar2Tensor            
 
