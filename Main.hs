@@ -20,8 +20,8 @@ main = do
     let interMetricMap = mkTensorMap interMetric
     let interAreaMap = mkTensorMap interArea
 
-    let sym2_aMap = mkTensorMap sym2_a
-    let sym3_aMap = mkTensorMap sym3_a
+    let sym2_aMap = mkTensorMap sym2Inter
+    let sym3_aMap = mkTensorMap sym3Inter
 
     let ivar1TensorMap = mkTensorMap ivar1Tensor
     let ivar2TensorMap = mkTensorMap ivar2Tensor
@@ -81,17 +81,34 @@ main = do
 
     --the biggest problem is to check if we evaluated ivars tensor inds and multinds the same way
 
-    let pdeList = map (\x -> zip lDiffList x) equation
 
     --now construct the pde
 
-    let pdeSys = map (mkPde (zeroIvar 315) 1 315 1) pdeList 
+    let multiIndMap = multIndex2Map 
   
-    let pdeSysProlonged = pdeSys ++ prolongSystem (mkAllMultiInds 315 1) pdeSys
+    {-
 
-    writeFile "HaskellPdeSys3.txt" $ show equation
+    readSys2 <- readFile "HaskellPdeSys3Test.txt"
 
-    writeFile "HaskellPdeProlonged3.txt" $ printSystoMaple pdeSysProlonged
+    let readSys = readPdeSys readSys2
+
+    let pdeList = map (\x -> zip lDiffList x) readSys
+
+    let pdeSysNew = map (mkPde (zeroIvar 315) 1 315 1) pdeList 
+  
+    let pdeSysProlonged = pdeSysNew ++ prolongSystem ((mkAllMultiInds 315 1)) pdeSysNew
+
+    writeFile "HaskellPdeProlonged5.txt" $ printSystoMaple multiIndMap pdeSysProlonged
+
+    -}
+
+    putStrLn $ show ( equation !! 62)
+
+
+    
+
+
+
     
 
 

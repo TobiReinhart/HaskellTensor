@@ -4,7 +4,7 @@ module Pde (
     MultiIndex, diffOrder, diffOrderMult, lengthMult, mkMultiIndex, multIndgetList, cartProdList, mkAllMultiIndsList, mkAllMultiInds,
     mkAllMultiIndsUpto, mkAllMultiIndsUptoRev, addLists, addMultiInds, getValue, Pde, isRightMultInd, removeZeros, mkPde, prolongPdeConstCoeff, combinePdes,
     combinePdesWith, multIndNumberMap, multIndex1toNumber, numbertoMultIndex1, multIndex2toNumber, multIndex2NumberMaple,  isDerivable1, deriveIvar, prolongPdeIvar,
-    prolongPdeAll, prolongSystem, printtoMaple, printSystoMaple, readPdeTxt, readPde, splitPdeTxt, splitPde, splitPdeSysTxt, splitPdeSys, readPdeSys
+    prolongPdeAll, prolongSystem, printtoMaple, printSystoMaple, readPdeTxt, readPde, splitPdeTxt, splitPde, splitPdeSysTxt, splitPdeSys, readPdeSys, multIndex2Map
     ) where
 
     import Data.List
@@ -211,14 +211,23 @@ module Pde (
                 newlist = ((l !! lz) -1) : (drop (lz+1) l) 
                 lz2 = length $ takeWhile (\x -> x==0) newlist
 
-    multIndex2NumberMaple :: MultiIndex -> Int
-    multIndex2NumberMaple (UnsafeMultInd i ord l) 
-                | ord == 0 = 50086
-                | ord == 1 = 49770 + (multIndex1toNumber (UnsafeMultInd i ord l))
-                | ord == 2 = ((fst p)-1)*315 + (snd p) 
+    --reverse the order in the matrix
+
+    --the range is wrong
+
+    multIndex2NumberMaple :: (Map.Map (Int,Int) Int) -> MultiIndex -> Int
+    multIndex2NumberMaple indMap (UnsafeMultInd i ord l) 
+                | ord == 0 = 1
+                | ord == 1 = (multIndex1toNumber (UnsafeMultInd i ord l))
+                | ord == 2 = (+) 316 (indMap Map.! (multIndex2toNumber (UnsafeMultInd i ord l)))
                 | otherwise = error "works only for multiinds up to order 2"
                  where p = multIndex2toNumber (UnsafeMultInd i ord l)
 
+    multIndex2Map :: Map.Map (Int,Int) Int
+    multIndex2Map = Map.fromList j
+                where 
+                        l = [ (a,b) | a <- [1..315], b <- [a..315] ]
+                        j = zip l [1..]
 
     numbertoMultIndex1 :: Int -> Int -> MultiIndex
     numbertoMultIndex1 i j = mkMultiIndex i 1 l
@@ -285,22 +294,22 @@ module Pde (
 
     --store the matrixrow (i.e. the eqn number) as argument in print to maple
 
-    printtoMaple :: (Num a, Ord a, Show a) => (Pde (Ivar a), Int) -> String
-    printtoMaple ((Pde i j n mapPde),int) = concat aList2 
+    printtoMaple :: (Num a, Ord a, Show a) => (Map.Map (Int,Int) Int ) -> (Pde (Ivar a), Int) -> String
+    printtoMaple indMap ((Pde i j n mapPde),int) = concat aList2 
                         where 
                                 aList = Map.assocs mapPde
-                                aList2 = map (\x -> ',' : (show (int,multIndex2NumberMaple (fst $ fst x))  ++ '=' : (show (snd x) ))) aList
+                                aList2 = map (\x -> (',' : (show (int,multIndex2NumberMaple indMap (fst $ fst x))  ++ '=' : (show (snd x) ))) ++ "\n" ) aList
 
 
 
 
 
 
-    printSystoMaple :: (Num a, Ord a, Show a) => [Pde (Ivar a)] -> String
-    printSystoMaple sys = '{' : (tail $ concat l) ++ "}"
+    printSystoMaple :: (Num a, Ord a, Show a) => (Map.Map (Int,Int) Int ) -> [Pde (Ivar a)] -> String
+    printSystoMaple indMap sys = '{' : (tail $ concat l) ++ "}"
                         where 
                                 z = zip sys [1..]
-                                l = map printtoMaple z
+                                l = map (printtoMaple indMap) z
                                  
 
     --this function is the problem !!!!! -> (the 2er versions are the older ones)

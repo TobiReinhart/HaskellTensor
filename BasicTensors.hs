@@ -6,7 +6,7 @@ module BasicTensors (
     ivar1Tensor, ivar2Tensor, ivar3Tensor, sym2_a, sym3_a,
     eqn1_1, eqn1_1Comps, eqn1_2Intertwiner, eqn1_2, eqn1_2Comps, eqn1_3Intertwiner, eqn1_3, eqn1_3Comps, eqn1_4Comps, 
     eqn2_1Comps, eqn2_2, eqn2_2Comps, eqn2_3Inter, eqn2_3, eqn2_3Comps, eqn2_4Comps,
-    eqn3_1Comps, eqn3_2Comps, eqn3_3Inter, eqn3_3, eqn3_3Comps, eqn3_4Comps
+    eqn3_1Comps, eqn3_2Comps, eqn3_3Inter, eqn3_3, eqn3_3Comps, eqn3_4Comps, sym2InterF, sym2Inter, sym3InterF, sym3Inter
 
 ) where
     
@@ -471,5 +471,26 @@ module BasicTensors (
 
     eqn3_4Comps :: [[Ivar Double]]
     eqn3_4Comps = replicate 80 $ replicate 1 $ zeroIvar 315
+
+    --factorless symmetrizer
+
+    sym2InterF :: Index -> Double
+    sym2InterF ([],[],[],[],[a,b],[c,d]) 
+            | sort (toListfromU_a [a,b]) == sort (toListfromL_a [c,d]) =  1
+            | otherwise = 0
+    sym2InterF l = error "wrong index for sym2Tensor"
+
+    sym3InterF :: Index -> Double
+    sym3InterF ([],[],[],[],[a,b,c],[d,e,f]) 
+            | sort (toListfromU_a [a,b,c]) == sort (toListfromL_a [d,e,f]) = 1
+            | otherwise = 0
+    sym3InterF l = error "wrong index for sym3Tensor"
+
+    sym2Inter :: Tensor Double
+    sym2Inter = Tensor (0,0,0,0,2,2) sym2InterF
+
+    sym3Inter :: Tensor Double
+    sym3Inter = Tensor (0,0,0,0,3,3) sym3InterF
+                
 
    
